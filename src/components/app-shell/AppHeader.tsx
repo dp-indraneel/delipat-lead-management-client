@@ -24,15 +24,15 @@ const initialNotifications: NotificationItem[] = [
   {
     id: "notif-1",
     title: "New lead added",
-    message: "A lead intake draft was reviewed and converted.",
+    message: "A new chatbot conversation created a lead directly in the pipeline.",
     time: "2 min ago",
     type: "lead",
     read: false,
   },
   {
     id: "notif-2",
-    title: "Draft import completed",
-    message: "Lead intake draft import finished successfully.",
+    title: "Lead import completed",
+    message: "Direct lead import finished successfully.",
     time: "18 min ago",
     type: "export",
     read: false,

@@ -20,9 +20,9 @@ export default function DashboardPage() {
   useEffect(() => {
     async function load() {
       try {
-        const [leads, aiReviewLeads, assignments, users, roles] = await Promise.all([
+        const [leads, hotLeads, assignments, users, roles] = await Promise.all([
           leadApi.list({ page: 1, limit: 20 }),
-          leadApi.list({ page: 1, limit: 20, status: "AI_ANALYSIS_PENDING" }),
+          leadApi.list({ page: 1, limit: 20, leadStatus: "HOT" }),
           leadAssignmentApi.list({ page: 1, limit: 20 }),
           adminApi.listUsers(),
           adminApi.listRoles(),
@@ -30,7 +30,7 @@ export default function DashboardPage() {
 
         setMetrics([
           { label: "Leads", value: String(leads.meta.total) },
-          { label: "AI Analysis Pending", value: String(aiReviewLeads.meta.total) },
+          { label: "Hot Leads", value: String(hotLeads.meta.total) },
           { label: "Assignments", value: String(assignments.meta.total) },
           { label: "Users", value: String(users.data.length) },
           { label: "Roles", value: String(roles.data.length) },
@@ -72,10 +72,10 @@ export default function DashboardPage() {
               Auth login and logout
             </div>
             <div className="rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] px-4 py-3">
-              Leads with chatbot intake fields, AI analysis status, dynamic fields, import, export, assign, delete
+              Direct leads with CRM fields, import, export, assign, and delete
             </div>
             <div className="rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] px-4 py-3">
-              Assignments, users, roles, modules and role permissions
+              Lead assignments, users, roles, modules and role permissions
             </div>
           </div>
         </Card>

@@ -7,9 +7,12 @@ import { getCurrentPath, navigateTo, onNavigation } from "./lib/navigation";
 import DashboardPage from "./pages/DashboardPage";
 import BulkEmailPage from "./pages/BulkEmailPage";
 import ActivityLogsPage from "./pages/ActivityLogsPage";
+import CreateLeadPage from "./pages/CreateLeadPage";
+import EditLeadPage from "./pages/EditLeadPage";
 import ExportLeadsPage from "./pages/ExportLeadsPage";
 import ImportLeadsPage from "./pages/ImportLeadsPage";
 import LeadAssignmentsPage from "./pages/LeadAssignmentsPage";
+import LeadDetailPage from "./pages/LeadDetailPage";
 import LeadListPage from "./pages/LeadListPage";
 import LoginPage from "./pages/LoginPage";
 import PendingApiPage from "./pages/PendingApiPage";
@@ -85,6 +88,9 @@ export default function App() {
   }, [isAuthenticated, isBootstrapping, path]);
 
   const page = useMemo(() => {
+    const leadDetailMatch = path.match(/^\/leads\/(\d+)$/);
+    const leadEditMatch = path.match(/^\/leads\/(\d+)\/edit$/);
+
     if (!isAuthenticated) {
       return (
         <LoginPage
@@ -107,6 +113,12 @@ export default function App() {
         return (
           <Shell title="Leads" subtitle="Manage converted and manual leads">
             <LeadListPage />
+          </Shell>
+        );
+      case "/leads/create":
+        return (
+          <Shell title="Create Lead" subtitle="Add a new lead directly into the pipeline">
+            <CreateLeadPage />
           </Shell>
         );
       case "/assignments":
@@ -158,6 +170,22 @@ export default function App() {
           </Shell>
         );
       default:
+        if (leadEditMatch) {
+          return (
+            <Shell title="Edit Lead" subtitle="Update an existing lead record">
+              <EditLeadPage leadId={Number(leadEditMatch[1])} />
+            </Shell>
+          );
+        }
+
+        if (leadDetailMatch) {
+          return (
+            <Shell title="Lead Detail" subtitle="Review the selected lead">
+              <LeadDetailPage leadId={Number(leadDetailMatch[1])} />
+            </Shell>
+          );
+        }
+
         return (
           <Shell title="Not Found" subtitle="This route does not exist">
             <PendingApiPage

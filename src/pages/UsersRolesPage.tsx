@@ -5,6 +5,7 @@ import EmptyState from "../components/ui/EmptyState";
 import Modal from "../components/ui/Modal";
 import PageTitle from "../components/ui/PageTitle";
 import SearchableSelect from "../components/ui/SearchableSelect";
+import { env } from "../config/env";
 import { adminApi } from "../lib/api";
 import type {
   AppUser,
@@ -18,15 +19,15 @@ export default function UsersRolesPage() {
   const [roles, setRoles] = useState<Role[]>([]);
   const [modules, setModules] = useState<ModuleWithPermissions[]>([]);
   const [rolePermissions, setRolePermissions] = useState<RolePermissionsByModule[]>([]);
-  const [selectedRoleId, setSelectedRoleId] = useState("2");
+  const [selectedRoleId, setSelectedRoleId] = useState(String(env.defaultReviewerRoleId));
   const [error, setError] = useState("");
   const [createUserOpen, setCreateUserOpen] = useState(false);
   const [createRoleOpen, setCreateRoleOpen] = useState(false);
   const [userForm, setUserForm] = useState({
     name: "",
     email: "",
-    password: "Admin@123",
-    roleId: 2,
+    password: env.adminPassword,
+    roleId: env.defaultReviewerRoleId,
   });
   const [roleName, setRoleName] = useState("");
 
@@ -120,7 +121,7 @@ export default function UsersRolesPage() {
               }))}
               value={selectedRoleId}
               placeholder="Select role"
-              onChange={(value) => setSelectedRoleId(value || "2")}
+              onChange={(value) => setSelectedRoleId(value || String(env.defaultReviewerRoleId))}
             />
 
             <div className="space-y-2">
@@ -238,7 +239,12 @@ export default function UsersRolesPage() {
               onClick={async () => {
                 await adminApi.createUser(userForm);
                 setCreateUserOpen(false);
-                setUserForm({ name: "", email: "", password: "Admin@123", roleId: 2 });
+                setUserForm({
+                  name: "",
+                  email: "",
+                  password: env.adminPassword,
+                  roleId: env.defaultReviewerRoleId,
+                });
                 await loadAdminData();
               }}
             >
@@ -274,7 +280,10 @@ export default function UsersRolesPage() {
             value={String(userForm.roleId)}
             isClearable={false}
             onChange={(value) =>
-              setUserForm((current) => ({ ...current, roleId: Number(value || "2") }))
+              setUserForm((current) => ({
+                ...current,
+                roleId: Number(value || String(env.defaultReviewerRoleId)),
+              }))
             }
           />
         </div>

@@ -6,14 +6,27 @@ import EmptyState from "../components/ui/EmptyState";
 import PageTitle from "../components/ui/PageTitle";
 import SearchableSelect from "../components/ui/SearchableSelect";
 import { leadApi } from "../lib/api";
+import {
+  createOptions,
+  LEAD_HOTNESS_STATUSES,
+  LEAD_PROJECT_TYPES,
+  LEAD_RECORD_STATUSES,
+  LEAD_SERVICE_TYPES,
+} from "../lib/leadOptions";
 import type { Lead } from "../types/api";
+
+const statusOptions = createOptions(LEAD_RECORD_STATUSES);
+const serviceTypeOptions = createOptions(LEAD_SERVICE_TYPES);
+const projectTypeOptions = createOptions(LEAD_PROJECT_TYPES);
+const leadHotnessOptions = createOptions(LEAD_HOTNESS_STATUSES);
 
 export default function ExportLeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
-  const [caseType, setCaseType] = useState("");
+  const [serviceType, setServiceType] = useState("");
+  const [projectType, setProjectType] = useState("");
   const [leadStatus, setLeadStatus] = useState("");
   const [search, setSearch] = useState("");
 
@@ -27,7 +40,8 @@ export default function ExportLeadsPage() {
           limit: 100,
           search,
           status,
-          caseType,
+          serviceType,
+          projectType,
           leadStatus,
         });
         setLeads(response.data);
@@ -39,7 +53,7 @@ export default function ExportLeadsPage() {
     }
 
     void load();
-  }, [search, status, caseType, leadStatus]);
+  }, [search, status, serviceType, projectType, leadStatus]);
 
   const sourceSummary = useMemo(
     () => Array.from(new Set(leads.map((lead) => lead.source))).join(", ") || "No sources",
@@ -66,36 +80,29 @@ export default function ExportLeadsPage() {
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search by name or email"
+                placeholder="Search by name, email, or company"
                 className="h-11 rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] px-3 text-sm text-[#013144] outline-none"
               />
               <SearchableSelect
-                options={[
-                  { value: "NEW", label: "New" },
-                  { value: "IN_REVIEW", label: "In Review" },
-                  { value: "FOLLOW_UP", label: "Follow Up" },
-                  { value: "CONTACT_ATTEMPTED", label: "Contact Attempted" },
-                ]}
+                options={statusOptions}
                 value={status}
                 placeholder="Status"
                 onChange={setStatus}
               />
               <SearchableSelect
-                options={[
-                  { value: "CAR_ACCIDENT", label: "Car Accident" },
-                  { value: "SLIP_AND_FALL", label: "Slip and Fall" },
-                  { value: "WORK_INJURY", label: "Work Injury" },
-                ]}
-                value={caseType}
-                placeholder="Case type"
-                onChange={setCaseType}
+                options={serviceTypeOptions}
+                value={serviceType}
+                placeholder="Service type"
+                onChange={setServiceType}
               />
               <SearchableSelect
-                options={[
-                  { value: "HOT", label: "Hot" },
-                  { value: "WARM", label: "Warm" },
-                  { value: "COLD", label: "Cold" },
-                ]}
+                options={projectTypeOptions}
+                value={projectType}
+                placeholder="Project type"
+                onChange={setProjectType}
+              />
+              <SearchableSelect
+                options={leadHotnessOptions}
                 value={leadStatus}
                 placeholder="Lead heat"
                 onChange={setLeadStatus}
@@ -129,7 +136,7 @@ export default function ExportLeadsPage() {
               <div className="flex items-center justify-between text-[#013144]/70">
                 <span>Filters active</span>
                 <span className="text-[#013144]">
-                  {[search, status, caseType, leadStatus].filter(Boolean).length}
+                  {[search, status, serviceType, projectType, leadStatus].filter(Boolean).length}
                 </span>
               </div>
             </div>
@@ -152,7 +159,7 @@ export default function ExportLeadsPage() {
                   >
                     <p className="font-medium text-[#013144]">{lead.fullName}</p>
                     <p className="mt-1 text-sm text-[#013144]/50">
-                      {lead.source} • {lead.status} • {lead.leadStatus || "-"}
+                      {lead.companyName || "-"} • {lead.serviceType || "-"} • {lead.status}
                     </p>
                   </div>
                 ))}

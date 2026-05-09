@@ -54,9 +54,13 @@ export default function ImportLeadsPage() {
                 "phone",
                 "companyName",
                 "jobTitle",
+                "serviceType",
+                "projectType",
+                "projectBudget",
+                "projectTimeline",
                 "source",
                 "status",
-                "city",
+                "location",
               ].map((field) => (
                 <div
                   key={field}

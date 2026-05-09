@@ -1,13 +1,14 @@
 import { useState } from "react";
 import Button from "../components/ui/Button";
+import { env } from "../config/env";
 
 interface Props {
   onLogin: (email: string, password: string) => Promise<void>;
 }
 
 export default function LoginPage({ onLogin }: Props) {
-  const [email, setEmail] = useState("admin@example.com");
-  const [password, setPassword] = useState("Admin@123");
+  const [email, setEmail] = useState(env.adminEmail);
+  const [password, setPassword] = useState(env.adminPassword);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -15,7 +16,7 @@ export default function LoginPage({ onLogin }: Props) {
     <div className="flex min-h-screen items-center justify-center bg-[#f8fbfc] px-4">
       <div className="w-full max-w-md rounded-3xl border border-[#013144]/12 bg-white p-8 shadow-xl">
         <p className="text-sm font-medium uppercase tracking-[0.22em] text-[#fcb61f]">
-          PI Law Management
+          Delipat Lead Management
         </p>
         <h1 className="mt-3 text-3xl font-semibold text-[#013144]">Sign in</h1>
         <p className="mt-2 text-sm text-[#013144]/55">

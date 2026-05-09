@@ -1,4 +1,4 @@
-import { MoreHorizontal } from "lucide-react";
+import { Eye, MoreHorizontal, Pencil, Trash2, UserPlus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
@@ -6,74 +6,23 @@ import EmptyState from "../components/ui/EmptyState";
 import Modal from "../components/ui/Modal";
 import PageTitle from "../components/ui/PageTitle";
 import SearchableSelect from "../components/ui/SearchableSelect";
+import { env } from "../config/env";
 import { adminApi, leadApi } from "../lib/api";
+import { formatJson } from "../lib/leadForm";
+import {
+  createOptions,
+  LEAD_HOTNESS_STATUSES,
+  LEAD_PROJECT_TYPES,
+  LEAD_RECORD_STATUSES,
+  LEAD_SERVICE_TYPES,
+} from "../lib/leadOptions";
+import { navigateTo } from "../lib/navigation";
 import type { AppUser, CreateLeadInput, Lead } from "../types/api";
 
-const leadStatusOptions = [
-  { value: "HOT", label: "Hot" },
-  { value: "WARM", label: "Warm" },
-  { value: "COLD", label: "Cold" },
-];
-
-const caseTypeOptions = [
-  { value: "CAR_ACCIDENT", label: "Car Accident" },
-  { value: "SLIP_AND_FALL", label: "Slip and Fall" },
-  { value: "WORK_INJURY", label: "Work Injury" },
-];
-
-const statusOptions = [
-  { value: "NEW", label: "New" },
-  { value: "AI_ANALYSIS_PENDING", label: "AI Analysis Pending" },
-  { value: "AI_ANALYZED", label: "AI Analyzed" },
-  { value: "IN_REVIEW", label: "In Review" },
-  { value: "FOLLOW_UP", label: "Follow Up" },
-  { value: "CONTACT_ATTEMPTED", label: "Contact Attempted" },
-];
-
-function createLeadForm(): CreateLeadInput {
-  return {
-    fullName: "",
-    phone: "",
-    email: "",
-    source: "MANUAL_ENTRY",
-    status: "NEW",
-    aiProvider: "",
-    aiModel: "",
-    caseType: "SLIP_AND_FALL",
-    caseTypeOther: "",
-    caseTypeText: "",
-    injuryType: "BROKEN_BONE",
-    injuryTypeOther: "",
-    injurySummary: "",
-    incidentDate: "",
-    location: "",
-    preferredContactMethod: "PHONE",
-    incidentDescription: "",
-    medicalTreatment: "",
-    liabilityInfo: "",
-    insuranceInfo: "",
-    representedByAttorney: false,
-    notes: "",
-    leadScore: 75,
-    leadStatus: "WARM",
-    extraCapturedData: {
-      businessType: "personal_injury",
-      dynamicFields: {
-        accidentType: "",
-        treatmentStatus: "",
-      },
-    },
-    rawConversation: [],
-    rawExtractedData: {},
-    aiSummary: "",
-    aiScore: 0,
-    aiAnalysisStatus: "PENDING",
-  };
-}
-
-function formatJson(value: unknown, fallback: unknown) {
-  return JSON.stringify(value ?? fallback, null, 2);
-}
+const leadStatusOptions = createOptions(LEAD_HOTNESS_STATUSES);
+const serviceTypeOptions = createOptions(LEAD_SERVICE_TYPES);
+const projectTypeOptions = createOptions(LEAD_PROJECT_TYPES);
+const statusOptions = createOptions(LEAD_RECORD_STATUSES);
 
 export default function LeadListPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -82,28 +31,17 @@ export default function LeadListPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
-  const [caseType, setCaseType] = useState("");
+  const [serviceType, setServiceType] = useState("");
+  const [projectType, setProjectType] = useState("");
   const [leadStatus, setLeadStatus] = useState("");
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [createOpen, setCreateOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
   const [assignOpen, setAssignOpen] = useState(false);
   const actionsMenuRef = useRef<HTMLDivElement | null>(null);
-  const [leadForm, setLeadForm] = useState<CreateLeadInput>(createLeadForm());
-  const [extraCapturedDataText, setExtraCapturedDataText] = useState(
-    formatJson(createLeadForm().extraCapturedData, {})
-  );
-  const [rawExtractedDataText, setRawExtractedDataText] = useState(
-    formatJson(createLeadForm().rawExtractedData, {})
-  );
-  const [rawConversationText, setRawConversationText] = useState(
-    formatJson(createLeadForm().rawConversation, [])
-  );
-  const [assignUserId, setAssignUserId] = useState("");
+  const [assignUserId, setAssignUserId] = useState(String(env.defaultAssignedToUserId));
   const [assignNotes, setAssignNotes] = useState("Assign to sales desk for immediate callback.");
   const [assignFollowUpAt, setAssignFollowUpAt] = useState("2026-05-05T15:00:00.000Z");
   const [importJson, setImportJson] = useState(
@@ -113,28 +51,21 @@ export default function LeadListPage() {
           fullName: "Import Lead One",
           phone: "+15550000001",
           email: "import1@example.com",
+          source: "MANUAL_ENTRY",
           status: "NEW",
-          caseType: "CAR_ACCIDENT",
-          injuryType: "SOFT_TISSUE",
-          incidentDate: "2026-04-10",
+          businessType: "",
+          companyName: "Northstar HealthTech",
+          serviceType: "CUSTOM_SOFTWARE",
+          projectType: "MVP",
+          projectBudget: "$20,000-$30,000",
+          projectTimeline: "12 weeks",
           location: "Miami, Florida",
-          representedByAttorney: false,
-          source: "AI_CHATBOT",
-          aiProvider: "OPENAI",
-          aiModel: "gpt-4.1-mini",
-          aiAnalysisStatus: "PENDING",
-          extraCapturedData: {
-            businessType: "software_company",
-            dynamicFields: {
-              companySize: "25-50",
-              productInterest: "CRM implementation",
-              budgetRange: "10000-25000",
-            },
-          },
-          rawConversation: [],
-          rawExtractedData: {
-            intent: "software_service_lead",
-          },
+          preferredContactMethod: "PHONE",
+          projectDescription: "Need a CRM and reporting workspace for a growing sales team.",
+          currentChallenges: "Tracking leads in spreadsheets and missing follow-ups.",
+          expectedFeatures: "Pipeline dashboard, reminders, export, role-based access.",
+          techStack: "Open to React and Node.js",
+          isDecisionMaker: true,
         },
       ],
       null,
@@ -147,7 +78,15 @@ export default function LeadListPage() {
     setError("");
     try {
       const [leadResponse, usersResponse] = await Promise.all([
-        leadApi.list({ page, limit: 20, search, status, caseType, leadStatus }),
+        leadApi.list({
+          page,
+          limit: 20,
+          search,
+          status,
+          serviceType,
+          projectType,
+          leadStatus,
+        }),
         adminApi.listUsers(),
       ]);
       setLeads(leadResponse.data);
@@ -171,14 +110,11 @@ export default function LeadListPage() {
 
   useEffect(() => {
     void loadLeads();
-  }, [page, search, status, caseType, leadStatus]);
+  }, [page, search, status, serviceType, projectType, leadStatus]);
 
   useEffect(() => {
     function handlePointerDown(event: PointerEvent) {
-      if (
-        actionsMenuRef.current &&
-        !actionsMenuRef.current.contains(event.target as Node)
-      ) {
+      if (actionsMenuRef.current && !actionsMenuRef.current.contains(event.target as Node)) {
         setActionsOpen(false);
       }
     }
@@ -201,78 +137,14 @@ export default function LeadListPage() {
     { label: "Export JSON", onClick: () => void leadApi.exportJson() },
   ];
 
-  function resetLeadForm() {
-    const nextForm = createLeadForm();
-    setLeadForm(nextForm);
-    setExtraCapturedDataText(formatJson(nextForm.extraCapturedData, {}));
-    setRawExtractedDataText(formatJson(nextForm.rawExtractedData, {}));
-    setRawConversationText(formatJson(nextForm.rawConversation, []));
-  }
-
-  function hydrateLeadForm(lead: Lead) {
-    const nextForm: CreateLeadInput = {
-      fullName: lead.fullName,
-      phone: lead.phone,
-      email: lead.email,
-      source: lead.source,
-      status: lead.status,
-      aiProvider: lead.aiProvider,
-      aiModel: lead.aiModel,
-      caseType: lead.caseType,
-      caseTypeOther: lead.caseTypeOther,
-      caseTypeText: lead.caseTypeText,
-      injuryType: lead.injuryType,
-      injuryTypeOther: lead.injuryTypeOther,
-      injurySummary: lead.injurySummary,
-      incidentDate: lead.incidentDate,
-      location: lead.location,
-      preferredContactMethod: lead.preferredContactMethod,
-      incidentDescription: lead.incidentDescription,
-      medicalTreatment: lead.medicalTreatment,
-      liabilityInfo: lead.liabilityInfo,
-      insuranceInfo: lead.insuranceInfo,
-      representedByAttorney: lead.representedByAttorney,
-      notes: lead.notes,
-      leadScore: lead.leadScore,
-      leadStatus: lead.leadStatus,
-      extraCapturedData: lead.extraCapturedData || {},
-      rawConversation: lead.rawConversation || [],
-      rawExtractedData: lead.rawExtractedData || {},
-      aiSummary: lead.aiSummary,
-      aiScore: lead.aiScore,
-      aiAnalysisStatus: lead.aiAnalysisStatus,
-    };
-
-    setLeadForm(nextForm);
-    setExtraCapturedDataText(formatJson(nextForm.extraCapturedData, {}));
-    setRawExtractedDataText(formatJson(nextForm.rawExtractedData, {}));
-    setRawConversationText(formatJson(nextForm.rawConversation, []));
-  }
-
-  function buildLeadPayload(): CreateLeadInput {
-    return {
-      ...leadForm,
-      leadScore: leadForm.leadScore ? Number(leadForm.leadScore) : null,
-      aiScore: leadForm.aiScore ? Number(leadForm.aiScore) : null,
-      extraCapturedData: JSON.parse(extraCapturedDataText) as Record<string, unknown>,
-      rawExtractedData: JSON.parse(rawExtractedDataText) as Record<string, unknown>,
-      rawConversation: JSON.parse(rawConversationText) as unknown[],
-    };
-  }
-
   return (
     <div className="space-y-5">
       <PageTitle
         title="Leads"
-        subtitle="Connected to the real lead APIs: list, create, update, patch, import, export, assign, and delete."
+        subtitle="Connected to the current direct lead APIs: list, create, update, import, export, assign, and delete."
         action={
           <div className="flex items-center gap-2">
-            <Button
-              onClick={() => {
-                resetLeadForm();
-                setCreateOpen(true);
-              }}
-            >
+            <Button onClick={() => navigateTo("/leads/create")}>
               Create Lead
             </Button>
             <div className="relative" ref={actionsMenuRef}>
@@ -318,19 +190,25 @@ export default function LeadListPage() {
       ) : null}
 
       <Card title="Search & Filters">
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-5">
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search by name or email"
+            placeholder="Search by name, email, or company"
             className="h-11 rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] px-3 text-sm text-[#013144] outline-none"
           />
           <SearchableSelect options={statusOptions} value={status} placeholder="Status" onChange={setStatus} />
           <SearchableSelect
-            options={caseTypeOptions}
-            value={caseType}
-            placeholder="Case type"
-            onChange={setCaseType}
+            options={serviceTypeOptions}
+            value={serviceType}
+            placeholder="Service type"
+            onChange={setServiceType}
+          />
+          <SearchableSelect
+            options={projectTypeOptions}
+            value={projectType}
+            placeholder="Project type"
+            onChange={setProjectType}
           />
           <SearchableSelect
             options={leadStatusOptions}
@@ -354,7 +232,8 @@ export default function LeadListPage() {
                   <tr>
                     <th className="px-4 py-3">Lead</th>
                     <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Case Type</th>
+                    <th className="px-4 py-3">Company</th>
+                    <th className="px-4 py-3">Service</th>
                     <th className="px-4 py-3">Lead Heat</th>
                     <th className="px-4 py-3">Source</th>
                     <th className="px-4 py-3 text-right">Actions</th>
@@ -364,51 +243,75 @@ export default function LeadListPage() {
                   {leads.map((lead) => (
                     <tr
                       key={lead.id}
-                      className={`border-t border-[#013144]/12 ${
+                      className={`cursor-pointer border-t border-[#013144]/12 transition hover:bg-[#013144]/[0.03] ${
                         selectedLead?.id === lead.id ? "bg-[#fcb61f]/8" : ""
                       }`}
+                      onClick={() => navigateTo(`/leads/${lead.id}`)}
                     >
                       <td className="px-4 py-3">
-                        <button className="text-left" onClick={() => setSelectedLead(lead)}>
+                        <button
+                          className="text-left"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            navigateTo(`/leads/${lead.id}`);
+                          }}
+                        >
                           <p className="font-medium text-[#013144]">{lead.fullName}</p>
                           <p className="text-xs text-[#013144]/50">{lead.email}</p>
                         </button>
                       </td>
                       <td className="px-4 py-3 text-[#013144]/75">{lead.status}</td>
-                      <td className="px-4 py-3 text-[#013144]/75">{lead.caseType || "-"}</td>
+                      <td className="px-4 py-3 text-[#013144]/75">{lead.companyName || "-"}</td>
+                      <td className="px-4 py-3 text-[#013144]/75">{lead.serviceType || "-"}</td>
                       <td className="px-4 py-3 text-[#013144]/75">{lead.leadStatus || "-"}</td>
                       <td className="px-4 py-3 text-[#013144]/75">{lead.source}</td>
                       <td className="px-4 py-3">
-                        <div className="flex justify-end gap-2">
-                          <Button variant="secondary" className="h-9 px-3" onClick={() => setSelectedLead(lead)}>
-                            View
-                          </Button>
+                        <div className="grid w-max grid-cols-2 justify-end gap-1">
                           <Button
                             variant="secondary"
-                            className="h-9 px-3"
-                            onClick={() => {
-                              setSelectedLead(lead);
-                              hydrateLeadForm(lead);
-                              setEditOpen(true);
+                            className="h-9! w-9! px-0!"
+                            aria-label={`View lead ${lead.fullName}`}
+                            title="View"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              navigateTo(`/leads/${lead.id}`);
                             }}
                           >
-                            Edit
+                            <Eye size={16} aria-hidden="true" />
                           </Button>
                           <Button
                             variant="secondary"
-                            className="h-9 px-3"
-                            onClick={() => {
+                            className="h-9! w-9! px-0!"
+                            aria-label={`Edit lead ${lead.fullName}`}
+                            title="Edit"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              navigateTo(`/leads/${lead.id}/edit`);
+                            }}
+                          >
+                            <Pencil size={16} aria-hidden="true" />
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            className="h-9! w-9! px-0!"
+                            aria-label={`Assign lead ${lead.fullName}`}
+                            title="Assign"
+                            onClick={(event) => {
+                              event.stopPropagation();
                               setSelectedLead(lead);
-                              setAssignUserId("");
+                              setAssignUserId(String(env.defaultAssignedToUserId));
                               setAssignOpen(true);
                             }}
                           >
-                            Assign
+                            <UserPlus size={16} aria-hidden="true" />
                           </Button>
                           <Button
                             variant="danger"
-                            className="h-9 px-3"
-                            onClick={async () => {
+                            className="h-9! w-9! px-0!"
+                            aria-label={`Delete lead ${lead.fullName}`}
+                            title="Delete"
+                            onClick={async (event) => {
+                              event.stopPropagation();
                               if (!window.confirm(`Delete lead #${lead.id}?`)) {
                                 return;
                               }
@@ -416,7 +319,7 @@ export default function LeadListPage() {
                               await loadLeads();
                             }}
                           >
-                            Delete
+                            <Trash2 size={16} aria-hidden="true" />
                           </Button>
                         </div>
                       </td>
@@ -453,12 +356,39 @@ export default function LeadListPage() {
                 <p className="mt-1">{selectedLead.phone}</p>
               </div>
               <div>
+                <p className="text-xs uppercase tracking-wide text-[#013144]/45">Company</p>
+                <p className="mt-1">
+                  {selectedLead.companyName || "-"}
+                  {selectedLead.jobTitle ? ` • ${selectedLead.jobTitle}` : ""}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-[#013144]/45">Service & Project</p>
+                <p className="mt-1">
+                  {selectedLead.serviceType || "-"} • {selectedLead.projectType || "-"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-[#013144]/45">Budget & Timeline</p>
+                <p className="mt-1">
+                  {selectedLead.projectBudget || "-"} • {selectedLead.projectTimeline || "-"}
+                </p>
+              </div>
+              <div>
                 <p className="text-xs uppercase tracking-wide text-[#013144]/45">Location</p>
                 <p className="mt-1">{selectedLead.location || "-"}</p>
               </div>
               <div>
-                <p className="text-xs uppercase tracking-wide text-[#013144]/45">Medical Treatment</p>
-                <p className="mt-1">{selectedLead.medicalTreatment || "-"}</p>
+                <p className="text-xs uppercase tracking-wide text-[#013144]/45">Project Description</p>
+                <p className="mt-1">{selectedLead.projectDescription || "-"}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-[#013144]/45">Current Challenges</p>
+                <p className="mt-1">{selectedLead.currentChallenges || "-"}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-[#013144]/45">Expected Features</p>
+                <p className="mt-1">{selectedLead.expectedFeatures || "-"}</p>
               </div>
               <div>
                 <p className="text-xs uppercase tracking-wide text-[#013144]/45">Notes</p>
@@ -484,78 +414,6 @@ export default function LeadListPage() {
           )}
         </Card>
       </div>
-
-      <Modal
-        open={createOpen}
-        title="Create Lead"
-        description="Uses `/api/v1/leads`."
-        onClose={() => setCreateOpen(false)}
-        footer={
-          <div className="flex justify-end gap-2">
-            <Button variant="secondary" onClick={() => setCreateOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={async () => {
-                await leadApi.create(buildLeadPayload());
-                setCreateOpen(false);
-                resetLeadForm();
-                await loadLeads();
-              }}
-            >
-              Create Lead
-            </Button>
-          </div>
-        }
-      >
-        <LeadForm
-          form={leadForm}
-          onChange={setLeadForm}
-          extraCapturedDataText={extraCapturedDataText}
-          rawExtractedDataText={rawExtractedDataText}
-          rawConversationText={rawConversationText}
-          onExtraCapturedDataTextChange={setExtraCapturedDataText}
-          onRawExtractedDataTextChange={setRawExtractedDataText}
-          onRawConversationTextChange={setRawConversationText}
-        />
-      </Modal>
-
-      <Modal
-        open={editOpen}
-        title="Update Lead"
-        description="Uses the full update lead API."
-        onClose={() => setEditOpen(false)}
-        footer={
-          <div className="flex justify-end gap-2">
-            <Button variant="secondary" onClick={() => setEditOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={async () => {
-                if (!selectedLead) {
-                  return;
-                }
-                await leadApi.update(selectedLead.id, buildLeadPayload());
-                setEditOpen(false);
-                await loadLeads();
-              }}
-            >
-              Save Changes
-            </Button>
-          </div>
-        }
-      >
-        <LeadForm
-          form={leadForm}
-          onChange={setLeadForm}
-          extraCapturedDataText={extraCapturedDataText}
-          rawExtractedDataText={rawExtractedDataText}
-          rawConversationText={rawConversationText}
-          onExtraCapturedDataTextChange={setExtraCapturedDataText}
-          onRawExtractedDataTextChange={setRawExtractedDataText}
-          onRawConversationTextChange={setRawConversationText}
-        />
-      </Modal>
 
       <Modal
         open={assignOpen}
@@ -639,119 +497,6 @@ export default function LeadListPage() {
           className="w-full rounded-2xl border border-[#013144]/12 bg-[#013144]/[0.04] px-4 py-3 font-mono text-sm text-[#013144] outline-none"
         />
       </Modal>
-    </div>
-  );
-}
-
-function LeadForm({
-  form,
-  onChange,
-  extraCapturedDataText,
-  rawExtractedDataText,
-  rawConversationText,
-  onExtraCapturedDataTextChange,
-  onRawExtractedDataTextChange,
-  onRawConversationTextChange,
-}: {
-  form: CreateLeadInput;
-  onChange: (value: CreateLeadInput) => void;
-  extraCapturedDataText: string;
-  rawExtractedDataText: string;
-  rawConversationText: string;
-  onExtraCapturedDataTextChange: (value: string) => void;
-  onRawExtractedDataTextChange: (value: string) => void;
-  onRawConversationTextChange: (value: string) => void;
-}) {
-  const setField = <K extends keyof CreateLeadInput>(key: K, value: CreateLeadInput[K]) => {
-    onChange({
-      ...form,
-      [key]: value,
-    });
-  };
-
-  return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-      {[
-        ["fullName", "Full name"],
-        ["phone", "Phone"],
-        ["email", "Email"],
-        ["source", "Source"],
-        ["status", "Status"],
-        ["aiProvider", "AI provider"],
-        ["aiModel", "AI model"],
-        ["caseType", "Case type"],
-        ["caseTypeText", "Case type text"],
-        ["injuryType", "Injury type"],
-        ["injurySummary", "Injury summary"],
-        ["incidentDate", "Incident date"],
-        ["location", "Location"],
-        ["preferredContactMethod", "Preferred contact method"],
-        ["leadStatus", "Lead heat"],
-        ["aiAnalysisStatus", "AI analysis status"],
-        ["aiScore", "AI score"],
-      ].map(([key, label]) => (
-        <input
-          key={key}
-          value={String(form[key as keyof CreateLeadInput] || "")}
-          onChange={(event) =>
-            setField(
-              key as keyof CreateLeadInput,
-              (key === "aiScore" ? Number(event.target.value) || 0 : event.target.value) as never
-            )
-          }
-          placeholder={label}
-          className="h-11 rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] px-3 text-sm text-[#013144] outline-none"
-        />
-      ))}
-      <textarea
-        value={form.medicalTreatment || ""}
-        onChange={(event) => setField("medicalTreatment", event.target.value)}
-        rows={4}
-        placeholder="Medical treatment"
-        className="sm:col-span-2 rounded-2xl border border-[#013144]/12 bg-[#013144]/[0.04] px-4 py-3 text-sm text-[#013144] outline-none"
-      />
-      <textarea
-        value={form.incidentDescription || ""}
-        onChange={(event) => setField("incidentDescription", event.target.value)}
-        rows={4}
-        placeholder="Incident or lead description"
-        className="sm:col-span-2 rounded-2xl border border-[#013144]/12 bg-[#013144]/[0.04] px-4 py-3 text-sm text-[#013144] outline-none"
-      />
-      <textarea
-        value={form.aiSummary || ""}
-        onChange={(event) => setField("aiSummary", event.target.value)}
-        rows={4}
-        placeholder="AI summary"
-        className="sm:col-span-2 rounded-2xl border border-[#013144]/12 bg-[#013144]/[0.04] px-4 py-3 text-sm text-[#013144] outline-none"
-      />
-      <textarea
-        value={form.notes || ""}
-        onChange={(event) => setField("notes", event.target.value)}
-        rows={4}
-        placeholder="Notes"
-        className="sm:col-span-2 rounded-2xl border border-[#013144]/12 bg-[#013144]/[0.04] px-4 py-3 text-sm text-[#013144] outline-none"
-      />
-      <textarea
-        value={extraCapturedDataText}
-        onChange={(event) => onExtraCapturedDataTextChange(event.target.value)}
-        rows={8}
-        placeholder="Dynamic fields JSON"
-        className="sm:col-span-2 rounded-2xl border border-[#013144]/12 bg-[#013144]/[0.04] px-4 py-3 font-mono text-sm text-[#013144] outline-none"
-      />
-      <textarea
-        value={rawExtractedDataText}
-        onChange={(event) => onRawExtractedDataTextChange(event.target.value)}
-        rows={8}
-        placeholder="Raw AI extracted data JSON"
-        className="sm:col-span-2 rounded-2xl border border-[#013144]/12 bg-[#013144]/[0.04] px-4 py-3 font-mono text-sm text-[#013144] outline-none"
-      />
-      <textarea
-        value={rawConversationText}
-        onChange={(event) => onRawConversationTextChange(event.target.value)}
-        rows={8}
-        placeholder="Raw conversation JSON array"
-        className="sm:col-span-2 rounded-2xl border border-[#013144]/12 bg-[#013144]/[0.04] px-4 py-3 font-mono text-sm text-[#013144] outline-none"
-      />
     </div>
   );
 }
