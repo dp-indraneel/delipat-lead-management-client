@@ -6,6 +6,7 @@ import type {
   ConvertLeadIntakeDraftInput,
   CreateLeadInput,
   CreateLeadIntakeDraftInput,
+  CreatePublicLeadInput,
   CreateRoleInput,
   CreateUserInput,
   Lead,
@@ -92,6 +93,12 @@ export const leadApi = {
   create: (payload: CreateLeadInput) =>
     request<ApiEnvelope<Lead>>("/api/v1/leads", {
       method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  createPublic: (payload: CreatePublicLeadInput) =>
+    request<ApiEnvelope<Lead>>("/api/v1/leads/public", {
+      method: "POST",
+      auth: false,
       body: JSON.stringify(payload),
     }),
   get: (id: number) => request<ApiEnvelope<Lead>>(`/api/v1/leads/${id}`),

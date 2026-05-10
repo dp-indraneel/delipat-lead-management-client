@@ -4,7 +4,8 @@ import Card from "../components/ui/Card";
 import EmptyState from "../components/ui/EmptyState";
 import PageTitle from "../components/ui/PageTitle";
 import { adminApi, leadApi } from "../lib/api";
-import { formatJson } from "../lib/leadForm";
+import { formatJsonKeyValue } from "../lib/leadForm";
+import { formatEnumLabel } from "../lib/leadOptions";
 import { navigateTo } from "../lib/navigation";
 import type { AppUser, Lead } from "../types/api";
 
@@ -40,7 +41,7 @@ export default function LeadDetailPage({ leadId }: Props) {
   }, [leadId]);
 
   const selectedSalesUser = useMemo(
-    () => users.find((user) => user.id === lead?.assignedSalesExecutiveId),
+    () => lead?.assignedSalesExecutive ?? users.find((user) => user.id === lead?.assignedSalesExecutiveId) ?? null,
     [lead, users]
   );
 
@@ -75,32 +76,79 @@ export default function LeadDetailPage({ leadId }: Props) {
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
           <Card title="Lead Overview" className="xl:col-span-7">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <DetailItem label="Full Name" value={lead.fullName} />
-              <DetailItem label="Email" value={lead.email} />
-              <DetailItem label="Phone" value={lead.phone} />
+              <DetailItem label="Full Name" value={lead.fullName || "-"} />
+              <DetailItem label="Email" value={lead.email || "-"} />
+              <DetailItem label="Phone" value={lead.phone || "-"} />
               <DetailItem label="Company" value={lead.companyName || "-"} />
+              <DetailItem label="Company Website" value={lead.companyWebsite || "-"} />
               <DetailItem label="Job Title" value={lead.jobTitle || "-"} />
-              <DetailItem label="Business Type" value={lead.businessType || "-"} />
-              <DetailItem label="Source" value={lead.source} />
-              <DetailItem label="Status" value={lead.status} />
-              <DetailItem label="Service Type" value={lead.serviceType || lead.serviceTypeText || "-"} />
-              <DetailItem label="Project Type" value={lead.projectType || lead.projectTypeText || "-"} />
+              <DetailItem label="Business Type" value={formatLeadValue(lead.businessType)} />
+              <DetailItem label="Source" value={lead.sourceLabel || formatEnumLabel(lead.source)} />
+              <DetailItem label="Source Label" value={lead.sourceLabel || "-"} />
+              <DetailItem label="Status" value={formatLeadValue(lead.status)} />
+              <DetailItem label="Service Type" value={formatLeadValue(lead.serviceType)} />
+              <DetailItem label="Service Type Other" value={lead.serviceTypeOther || "-"} />
+              <DetailItem label="Service Type Text" value={lead.serviceTypeText || "-"} />
+              <DetailItem label="Project Type" value={formatLeadValue(lead.projectType)} />
+              <DetailItem label="Project Type Other" value={lead.projectTypeOther || "-"} />
+              <DetailItem label="Project Type Text" value={lead.projectTypeText || "-"} />
               <DetailItem label="Project Budget" value={lead.projectBudget || "-"} />
               <DetailItem label="Project Timeline" value={lead.projectTimeline || "-"} />
-              <DetailItem label="Preferred Contact" value={lead.preferredContactMethod || "-"} />
+              <DetailItem label="Preferred Contact" value={formatLeadValue(lead.preferredContactMethod)} />
               <DetailItem label="Location" value={lead.location || "-"} />
-              <DetailItem label="Decision Maker" value={lead.isDecisionMaker ? "Yes" : "No"} />
-              <DetailItem label="Lead Heat" value={lead.leadStatus || "-"} />
+              <DetailItem
+                label="Decision Maker"
+                value={lead.isDecisionMaker === null ? "-" : lead.isDecisionMaker ? "Yes" : "No"}
+              />
+              <DetailItem label="Lead Heat" value={formatLeadValue(lead.leadStatus)} />
             </div>
           </Card>
 
           <Card title="Qualification" className="xl:col-span-5">
             <div className="space-y-4 text-sm text-[#013144]/75">
-              <DetailItem label="Lead Score" value={lead.leadScore !== null ? String(lead.leadScore) : "-"} />
-              <DetailItem label="Assigned Sales Executive" value={selectedSalesUser ? selectedSalesUser.name : String(lead.assignedSalesExecutiveId || "-")} />
-              <DetailItem label="AI Provider" value={lead.aiProvider || "-"} />
+              <DetailItem
+                label="Lead Score"
+                value={lead.leadScore !== null && lead.leadScore !== undefined ? String(lead.leadScore) : "-"}
+              />
+              <DetailItem
+                label="Score"
+                value={lead.score !== null && lead.score !== undefined ? String(lead.score) : "-"}
+              />
+              <DetailItem
+                label="Assigned Sales Executive"
+                value={selectedSalesUser ? selectedSalesUser.name : String(lead.assignedSalesExecutiveId || "-")}
+              />
+              <DetailItem label="AI Provider" value={formatLeadValue(lead.aiProvider)} />
               <DetailItem label="AI Model" value={lead.aiModel || "-"} />
+              <DetailItem label="AI Next Action" value={lead.aiNextAction || "-"} />
+              <DetailItem
+                label="AI Missing Fields"
+                value={
+                  lead.aiMissingFields?.length
+                    ? lead.aiMissingFields.map((field) => formatFieldLabel(field)).join(", ")
+                    : "-"
+                }
+              />
               <DetailItem label="AI Summary" value={lead.aiSummary || "-"} />
+            </div>
+          </Card>
+
+          <Card title="Acquisition Tracking" className="xl:col-span-12">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <DetailItem label="Campaign" value={lead.campaign || "-"} />
+              <DetailItem label="Medium" value={lead.medium || "-"} />
+              <DetailItem label="Channel" value={lead.channel || "-"} />
+              <DetailItem label="GCLID" value={lead.gclid || "-"} />
+              <DetailItem label="UTM Source" value={lead.utmSource || "-"} />
+              <DetailItem label="UTM Medium" value={lead.utmMedium || "-"} />
+              <DetailItem label="UTM Campaign" value={lead.utmCampaign || "-"} />
+              <DetailItem label="UTM Term" value={lead.utmTerm || "-"} />
+              <DetailItem label="UTM Content" value={lead.utmContent || "-"} />
+              <DetailItem label="Page URL" value={lead.pageUrl || "-"} />
+              <DetailItem label="Referrer URL" value={lead.referrerUrl || "-"} />
+              <DetailItem label="Created At" value={lead.createdAt || "-"} />
+              <DetailItem label="Updated At" value={lead.updatedAt || "-"} />
+              <DetailItem label="Deleted At" value={lead.deletedAt || "-"} />
             </div>
           </Card>
 
@@ -116,13 +164,29 @@ export default function LeadDetailPage({ leadId }: Props) {
             <p className="text-sm text-[#013144]/75">{lead.expectedFeatures || "-"}</p>
           </Card>
 
+          <Card title="Tech Stack" className="xl:col-span-6">
+            <p className="text-sm text-[#013144]/75">{lead.techStack || "-"}</p>
+          </Card>
+
           <Card title="Notes" className="xl:col-span-6">
             <p className="text-sm text-[#013144]/75">{lead.notes || "-"}</p>
           </Card>
 
-          <Card title="Extra Captured Data" className="xl:col-span-12">
+          <Card title="Custom Fields" className="xl:col-span-12">
             <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded-xl bg-[#013144]/[0.04] p-3 text-xs text-[#013144]">
-              {formatJson(lead.extraCapturedData, {})}
+              {formatJsonKeyValue(lead.customFields, {})}
+            </pre>
+          </Card>
+
+          <Card title="Raw Conversation" className="xl:col-span-12">
+            <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded-xl bg-[#013144]/[0.04] p-3 text-xs text-[#013144]">
+              {formatJsonKeyValue(lead.rawConversation, [])}
+            </pre>
+          </Card>
+
+          <Card title="Messages" className="xl:col-span-12">
+            <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded-xl bg-[#013144]/[0.04] p-3 text-xs text-[#013144]">
+              {formatJsonKeyValue(lead.messages, [])}
             </pre>
           </Card>
         </div>
@@ -138,4 +202,17 @@ function DetailItem({ label, value }: { label: string; value: string }) {
       <p className="mt-1 text-sm text-[#013144]">{value}</p>
     </div>
   );
+}
+
+function formatLeadValue(value: string | null | undefined) {
+  return value ? formatEnumLabel(value) : "-";
+}
+
+function formatFieldLabel(value: string) {
+  return value
+    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+    .split("_")
+    .filter(Boolean)
+    .map((part) => formatEnumLabel(part))
+    .join(" ");
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import PageTitle from "../components/ui/PageTitle";
@@ -176,24 +176,30 @@ export default function LeadIntakeDraftFormPage({ mode, draftId }: Props) {
         ) : (
           <div className="space-y-6">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <input
-                value={form.source || ""}
-                onChange={(event) => setField("source", event.target.value)}
-                placeholder="Source"
-                className="h-11 rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] px-3 text-sm text-[#013144] outline-none"
-              />
-              <input
-                value={form.aiProvider || ""}
-                onChange={(event) => setField("aiProvider", event.target.value)}
-                placeholder="AI provider"
-                className="h-11 rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] px-3 text-sm text-[#013144] outline-none"
-              />
-              <input
-                value={form.aiModel || ""}
-                onChange={(event) => setField("aiModel", event.target.value)}
-                placeholder="AI model"
-                className="h-11 rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] px-3 text-sm text-[#013144] outline-none"
-              />
+              <Field label="Source">
+                <input
+                  value={form.source ?? ""}
+                  onChange={(event) => setField("source", event.target.value)}
+                  placeholder="Source"
+                  className="h-11 rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] px-3 text-sm text-[#013144] outline-none"
+                />
+              </Field>
+              <Field label="AI Provider">
+                <input
+                  value={form.aiProvider ?? ""}
+                  onChange={(event) => setField("aiProvider", event.target.value)}
+                  placeholder="AI provider"
+                  className="h-11 rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] px-3 text-sm text-[#013144] outline-none"
+                />
+              </Field>
+              <Field label="AI Model">
+                <input
+                  value={form.aiModel ?? ""}
+                  onChange={(event) => setField("aiModel", event.target.value)}
+                  placeholder="AI model"
+                  className="h-11 rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] px-3 text-sm text-[#013144] outline-none"
+                />
+              </Field>
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -209,18 +215,31 @@ export default function LeadIntakeDraftFormPage({ mode, draftId }: Props) {
                 ["reviewStatus", "Review status"],
                 ["aiScore", "AI score"],
               ].map(([key, label]) => (
-                <input
-                  key={key}
-                  value={String(form[key as keyof CreateLeadIntakeDraftInput] || "")}
-                  onChange={(event) =>
-                    setField(
-                      key as keyof CreateLeadIntakeDraftInput,
-                      (key === "aiScore" ? Number(event.target.value) || 0 : event.target.value) as never
-                    )
-                  }
-                  placeholder={label}
-                  className="h-11 rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] px-3 text-sm text-[#013144] outline-none"
-                />
+                <Field key={key} label={label}>
+                  <input
+                    value={
+                      key === "aiScore"
+                        ? form.aiScore === null || form.aiScore === undefined
+                          ? ""
+                          : String(form.aiScore)
+                        : String(form[key as keyof CreateLeadIntakeDraftInput] ?? "")
+                    }
+                    onChange={(event) =>
+                      setField(
+                        key as keyof CreateLeadIntakeDraftInput,
+                        (
+                          key === "aiScore"
+                            ? event.target.value === ""
+                              ? null
+                              : Number(event.target.value)
+                            : event.target.value
+                        ) as never
+                      )
+                    }
+                    placeholder={label}
+                    className="h-11 rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] px-3 text-sm text-[#013144] outline-none"
+                  />
+                </Field>
               ))}
             </div>
 
@@ -232,16 +251,17 @@ export default function LeadIntakeDraftFormPage({ mode, draftId }: Props) {
                 ["insuranceInfo", "Insurance info"],
                 ["aiSummary", "AI summary"],
               ].map(([key, label]) => (
-                <textarea
-                  key={key}
-                  value={String(form[key as keyof CreateLeadIntakeDraftInput] || "")}
-                  onChange={(event) =>
-                    setField(key as keyof CreateLeadIntakeDraftInput, event.target.value as never)
-                  }
-                  rows={3}
-                  placeholder={label}
-                  className="rounded-2xl border border-[#013144]/12 bg-[#013144]/[0.04] px-4 py-3 text-sm text-[#013144] outline-none"
-                />
+                <Field key={key} label={label}>
+                  <textarea
+                    value={String(form[key as keyof CreateLeadIntakeDraftInput] ?? "")}
+                    onChange={(event) =>
+                      setField(key as keyof CreateLeadIntakeDraftInput, event.target.value as never)
+                    }
+                    rows={3}
+                    placeholder={label}
+                    className="rounded-2xl border border-[#013144]/12 bg-[#013144]/[0.04] px-4 py-3 text-sm text-[#013144] outline-none"
+                  />
+                </Field>
               ))}
             </div>
 
@@ -258,39 +278,30 @@ export default function LeadIntakeDraftFormPage({ mode, draftId }: Props) {
             </div>
 
             <div className="grid grid-cols-1 gap-4">
-              <div>
-                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-[#013144]/45">
-                  Extra Captured Data JSON
-                </p>
+              <Field label="Extra Captured Data JSON">
                 <textarea
                   value={extraCapturedDataText}
                   onChange={(event) => setExtraCapturedDataText(event.target.value)}
                   rows={8}
                   className="w-full rounded-2xl border border-[#013144]/12 bg-[#013144]/[0.04] px-4 py-3 font-mono text-sm text-[#013144] outline-none"
                 />
-              </div>
-              <div>
-                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-[#013144]/45">
-                  Raw Extracted Data JSON
-                </p>
+              </Field>
+              <Field label="Raw Extracted Data JSON">
                 <textarea
                   value={rawExtractedDataText}
                   onChange={(event) => setRawExtractedDataText(event.target.value)}
                   rows={8}
                   className="w-full rounded-2xl border border-[#013144]/12 bg-[#013144]/[0.04] px-4 py-3 font-mono text-sm text-[#013144] outline-none"
                 />
-              </div>
-              <div>
-                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-[#013144]/45">
-                  Raw Conversation JSON
-                </p>
+              </Field>
+              <Field label="Raw Conversation JSON">
                 <textarea
                   value={rawConversationText}
                   onChange={(event) => setRawConversationText(event.target.value)}
                   rows={8}
                   className="w-full rounded-2xl border border-[#013144]/12 bg-[#013144]/[0.04] px-4 py-3 font-mono text-sm text-[#013144] outline-none"
                 />
-              </div>
+              </Field>
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
@@ -311,5 +322,16 @@ export default function LeadIntakeDraftFormPage({ mode, draftId }: Props) {
         )}
       </Card>
     </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <label className="space-y-2">
+      <span className="block text-xs font-medium uppercase tracking-wide text-[#013144]/45">
+        {label}
+      </span>
+      {children}
+    </label>
   );
 }

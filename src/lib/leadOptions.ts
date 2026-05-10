@@ -34,13 +34,25 @@ export const LEAD_RECORD_STATUSES = [
   "AI_ANALYZING",
   "AI_REVIEW_REQUIRED",
   "NEW",
-  "IN_REVIEW",
+  "UNASSIGNED",
+  "ASSIGNED",
+  "ATTEMPT_PENDING",
   "CONTACT_ATTEMPTED",
-  "FOLLOW_UP",
+  "NO_RESPONSE",
+  "FOLLOW_UP_SCHEDULED",
+  "RESPONDED",
+  "INTERESTED",
+  "NOT_INTERESTED",
   "CONSULTATION_SCHEDULED",
+  "CONSULTATION_COMPLETED",
   "QUALIFIED",
-  "SIGNED",
-  "REJECTED",
+  "PROPOSAL_SENT",
+  "NEGOTIATION",
+  "WON",
+  "LOST",
+  "ON_HOLD",
+  "DUPLICATE",
+  "SPAM",
   "CLOSED",
 ] as const;
 
@@ -129,10 +141,23 @@ export function calculateLeadScore(input: ScoreInput) {
 }
 
 export function formatEnumLabel(value: string) {
+  const acronymMap: Record<string, string> = {
+    ai: "AI",
+    api: "API",
+    b2b: "B2B",
+    b2c: "B2C",
+    crm: "CRM",
+    gclid: "GCLID",
+    seo: "SEO",
+    ui: "UI",
+    url: "URL",
+    utm: "UTM",
+  };
+
   return value
     .toLowerCase()
     .split("_")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .map((part) => acronymMap[part] || part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
 }
 

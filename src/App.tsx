@@ -16,6 +16,7 @@ import LeadDetailPage from "./pages/LeadDetailPage";
 import LeadListPage from "./pages/LeadListPage";
 import LoginPage from "./pages/LoginPage";
 import PendingApiPage from "./pages/PendingApiPage";
+import PublicLeadCapturePage from "./pages/PublicLeadCapturePage";
 import SettingsPage from "./pages/SettingsPage";
 import TemplatesPage from "./pages/TemplatesPage";
 import UsersRolesPage from "./pages/UsersRolesPage";
@@ -65,6 +66,7 @@ function Shell({
 export default function App() {
   const { isAuthenticated, isBootstrapping, login } = useAuth();
   const [path, setPath] = useState(() => getCurrentPath());
+  const isPublicLeadCaptureRoute = path === "/public-lead";
 
   useEffect(() => {
     return onNavigation(() => {
@@ -77,7 +79,7 @@ export default function App() {
       return;
     }
 
-    if (!isAuthenticated && path !== "/login") {
+    if (!isAuthenticated && path !== "/login" && !isPublicLeadCaptureRoute) {
       navigateTo("/login", { replace: true });
       return;
     }
@@ -85,11 +87,15 @@ export default function App() {
     if (isAuthenticated && (path === "/" || path === "/login")) {
       navigateTo("/dashboard", { replace: true });
     }
-  }, [isAuthenticated, isBootstrapping, path]);
+  }, [isAuthenticated, isBootstrapping, isPublicLeadCaptureRoute, path]);
 
   const page = useMemo(() => {
     const leadDetailMatch = path.match(/^\/leads\/(\d+)$/);
     const leadEditMatch = path.match(/^\/leads\/(\d+)\/edit$/);
+
+    if (path === "/public-lead") {
+      return <PublicLeadCapturePage />;
+    }
 
     if (!isAuthenticated) {
       return (

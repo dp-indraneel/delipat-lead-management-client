@@ -1,73 +1,100 @@
-# React + TypeScript + Vite
+# Delipat Lead Management Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Chatbot Widget Embed
 
-Currently, two official plugins are available:
+This project now includes a standalone chatbot widget script at [public/chatbot-widget.js](/Users/indraneel/Desktop/Product/delipat-lead-management-client/public/chatbot-widget.js). Once this app is deployed, that file will be available from your hosted domain and can be embedded on any website.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+### Quick Embed
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```html
+<script>
+  window.DelipatChatbotConfig = {
+    title: "Talk to Delipat",
+    subtitle: "Ask us anything about our services.",
+    welcomeMessage: "Hi! How can we help you today?",
+    primaryColor: "#013144",
+    accentColor: "#fcb61f",
+    webhookUrl: "https://your-api.example.com/chat",
+  };
+</script>
+<script
+  src="https://your-domain.com/chatbot-widget.js"
+  defer
+></script>
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Data Attribute Version
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```html
+<script
+  src="https://your-domain.com/chatbot-widget.js"
+  data-delipat-chatbot-widget
+  data-title="Talk to Delipat"
+  data-subtitle="Ask us anything about our services."
+  data-welcome-message="Hi! How can we help you today?"
+  data-primary-color="#013144"
+  data-accent-color="#fcb61f"
+  data-webhook-url="https://your-api.example.com/chat"
+  defer
+></script>
 ```
+
+### Supported Config
+
+- `title`: panel heading
+- `subtitle`: helper text under the title
+- `welcomeMessage`: first bot message
+- `placeholder`: textarea placeholder
+- `buttonLabel`: launcher button text
+- `primaryColor`: main brand color
+- `accentColor`: send button and focus color
+- `textColor`: body text color
+- `position`: `"right"` or `"left"`
+- `webhookUrl`: optional endpoint for bot replies
+- `webhookMethod`: request method, defaults to `POST`
+- `webhookHeaders`: extra headers for webhook requests
+- `storageKey`: localStorage key for chat history
+- `maxMessages`: max stored messages
+- `zIndex`: overlay stacking value
+- `siteName`: small label shown in the widget header
+- `onMessageSent`: optional browser callback function
+
+### Webhook Response Format
+
+The widget sends:
+
+```json
+{
+  "message": "Hello",
+  "messages": [],
+  "pageUrl": "https://example.com",
+  "siteName": "example.com"
+}
+```
+
+Your API can reply with any of these shapes:
+
+```json
+{ "reply": "Hi there!" }
+```
+
+```json
+{ "message": "Hi there!" }
+```
+
+```json
+{ "text": "Hi there!" }
+```
+
+### Local Development
+
+```bash
+npm install
+npm run dev
+```
+
+The widget file is served directly from `public/`, so in local dev it will be available at `http://localhost:5173/chatbot-widget.js`.
+
+
+public-lead url
+`http://localhost:5173/public-lead?source=GOOGLE_ADS&sourceLabel=Google%20Search%20Campaign&campaign=crm-leads-may&medium=cpc&channel=paid-search&gclid=test-gclid-123&utm_source=google&utm_medium=cpc&utm_campaign=crm-leads-may&utm_term=crm%20software&utm_content=headline-a`

@@ -1,5 +1,5 @@
 import { Eye, MoreHorizontal, Pencil, Trash2, UserPlus } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import EmptyState from "../components/ui/EmptyState";
@@ -8,9 +8,9 @@ import PageTitle from "../components/ui/PageTitle";
 import SearchableSelect from "../components/ui/SearchableSelect";
 import { env } from "../config/env";
 import { adminApi, leadApi } from "../lib/api";
-import { formatJson } from "../lib/leadForm";
 import {
   createOptions,
+  formatEnumLabel,
   LEAD_HOTNESS_STATUSES,
   LEAD_PROJECT_TYPES,
   LEAD_RECORD_STATUSES,
@@ -126,11 +126,6 @@ export default function LeadListPage() {
     return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, [actionsOpen]);
 
-  const selectedSalesUser = useMemo(
-    () => users.find((user) => user.id === selectedLead?.assignedSalesExecutiveId),
-    [selectedLead, users]
-  );
-
   const actionMenuItems = [
     { label: "Import JSON", onClick: () => setImportOpen(true) },
     { label: "Export CSV", onClick: () => void leadApi.exportCsv() },
@@ -220,7 +215,7 @@ export default function LeadListPage() {
       </Card>
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
-        <Card title="Lead Results" className="xl:col-span-8">
+        <Card title="Lead Results" className="xl:col-span-12">
           {loading ? (
             <p className="text-sm text-[#013144]/60">Loading leads...</p>
           ) : leads.length === 0 ? (
@@ -236,7 +231,9 @@ export default function LeadListPage() {
                     <th className="px-4 py-3">Service</th>
                     <th className="px-4 py-3">Lead Heat</th>
                     <th className="px-4 py-3">Source</th>
-                    <th className="px-4 py-3 text-right">Actions</th>
+                    <th className="sticky right-0 z-10 w-[116px] bg-[#eef4f6] px-4 py-3 text-center">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -260,16 +257,26 @@ export default function LeadListPage() {
                           <p className="text-xs text-[#013144]/50">{lead.email}</p>
                         </button>
                       </td>
-                      <td className="px-4 py-3 text-[#013144]/75">{lead.status}</td>
+                      <td className="px-4 py-3 text-[#013144]/75">{formatEnumLabel(lead.status)}</td>
                       <td className="px-4 py-3 text-[#013144]/75">{lead.companyName || "-"}</td>
-                      <td className="px-4 py-3 text-[#013144]/75">{lead.serviceType || "-"}</td>
-                      <td className="px-4 py-3 text-[#013144]/75">{lead.leadStatus || "-"}</td>
-                      <td className="px-4 py-3 text-[#013144]/75">{lead.source}</td>
-                      <td className="px-4 py-3">
-                        <div className="grid w-max grid-cols-2 justify-end gap-1">
+                      <td className="px-4 py-3 text-[#013144]/75">
+                        {lead.serviceType ? formatEnumLabel(lead.serviceType) : "-"}
+                      </td>
+                      <td className="px-4 py-3 text-[#013144]/75">
+                        {lead.leadStatus ? formatEnumLabel(lead.leadStatus) : "-"}
+                      </td>
+                      <td className="px-4 py-3 text-[#013144]/75">
+                        {lead.sourceLabel || formatEnumLabel(lead.source)}
+                      </td>
+                      <td
+                        className={`sticky right-0 w-[116px] px-4 py-3 ${
+                          selectedLead?.id === lead.id ? "bg-[#fdf3cf]" : "bg-white"
+                        }`}
+                      >
+                        <div className="grid grid-cols-2 gap-2">
                           <Button
                             variant="secondary"
-                            className="h-9! w-9! px-0!"
+                            className="h-9! w-9! px-0! cursor-pointer"
                             aria-label={`View lead ${lead.fullName}`}
                             title="View"
                             onClick={(event) => {
@@ -281,7 +288,7 @@ export default function LeadListPage() {
                           </Button>
                           <Button
                             variant="secondary"
-                            className="h-9! w-9! px-0!"
+                            className="h-9! w-9! px-0! cursor-pointer"
                             aria-label={`Edit lead ${lead.fullName}`}
                             title="Edit"
                             onClick={(event) => {
@@ -293,7 +300,7 @@ export default function LeadListPage() {
                           </Button>
                           <Button
                             variant="secondary"
-                            className="h-9! w-9! px-0!"
+                            className="h-9! w-9! px-0! cursor-pointer"
                             aria-label={`Assign lead ${lead.fullName}`}
                             title="Assign"
                             onClick={(event) => {
@@ -307,7 +314,7 @@ export default function LeadListPage() {
                           </Button>
                           <Button
                             variant="danger"
-                            className="h-9! w-9! px-0!"
+                            className="h-9! w-9! px-0! cursor-pointer"
                             aria-label={`Delete lead ${lead.fullName}`}
                             title="Delete"
                             onClick={async (event) => {
@@ -344,74 +351,6 @@ export default function LeadListPage() {
               Next
             </Button>
           </div>
-        </Card>
-
-        <Card title="Lead Detail" className="xl:col-span-4">
-          {!selectedLead ? (
-            <EmptyState title="No lead selected" description="Choose a lead to inspect its details." />
-          ) : (
-            <div className="space-y-3 text-sm text-[#013144]/75">
-              <div>
-                <p className="text-xs uppercase tracking-wide text-[#013144]/45">Phone</p>
-                <p className="mt-1">{selectedLead.phone}</p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-wide text-[#013144]/45">Company</p>
-                <p className="mt-1">
-                  {selectedLead.companyName || "-"}
-                  {selectedLead.jobTitle ? ` • ${selectedLead.jobTitle}` : ""}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-wide text-[#013144]/45">Service & Project</p>
-                <p className="mt-1">
-                  {selectedLead.serviceType || "-"} • {selectedLead.projectType || "-"}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-wide text-[#013144]/45">Budget & Timeline</p>
-                <p className="mt-1">
-                  {selectedLead.projectBudget || "-"} • {selectedLead.projectTimeline || "-"}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-wide text-[#013144]/45">Location</p>
-                <p className="mt-1">{selectedLead.location || "-"}</p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-wide text-[#013144]/45">Project Description</p>
-                <p className="mt-1">{selectedLead.projectDescription || "-"}</p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-wide text-[#013144]/45">Current Challenges</p>
-                <p className="mt-1">{selectedLead.currentChallenges || "-"}</p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-wide text-[#013144]/45">Expected Features</p>
-                <p className="mt-1">{selectedLead.expectedFeatures || "-"}</p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-wide text-[#013144]/45">Notes</p>
-                <p className="mt-1">{selectedLead.notes || "-"}</p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-wide text-[#013144]/45">AI Summary</p>
-                <p className="mt-1">{selectedLead.aiSummary || "-"}</p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-wide text-[#013144]/45">Dynamic Fields</p>
-                <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap rounded-xl bg-[#013144]/[0.04] p-3 text-xs">
-                  {formatJson(selectedLead.extraCapturedData, {})}
-                </pre>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-wide text-[#013144]/45">Assigned Sales Executive</p>
-                <p className="mt-1">
-                  {selectedSalesUser ? selectedSalesUser.name : selectedLead.assignedSalesExecutiveId || "-"}
-                </p>
-              </div>
-            </div>
-          )}
         </Card>
       </div>
 

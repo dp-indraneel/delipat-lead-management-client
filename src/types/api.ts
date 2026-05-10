@@ -115,10 +115,13 @@ export interface LeadIntakeDraftImportResult {
 
 export interface Lead {
   id: number;
-  fullName: string;
-  phone: string;
-  email: string;
+  fullName: string | null;
+  phone: string | null;
+  email: string | null;
   source: string;
+  aiProvider: string | null;
+  aiModel: string | null;
+  status: string;
   businessType: string | null;
   companyName: string | null;
   companyWebsite: string | null;
@@ -136,37 +139,35 @@ export interface Lead {
   expectedFeatures: string | null;
   techStack: string | null;
   isDecisionMaker: boolean | null;
-  aiProvider: string | null;
-  aiModel: string | null;
-  status: string;
-  caseType: string | null;
-  caseTypeOther: string | null;
-  caseTypeText: string | null;
-  injuryType: string | null;
-  injuryTypeOther: string | null;
-  injurySummary: string | null;
-  incidentDate: string | null;
+  sourceLabel?: string | null;
+  campaign?: string | null;
+  medium?: string | null;
+  channel?: string | null;
+  pageUrl?: string | null;
+  referrerUrl?: string | null;
+  gclid?: string | null;
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
+  utmTerm?: string | null;
+  utmContent?: string | null;
   location: string | null;
   preferredContactMethod: string | null;
-  medicalTreatment: string | null;
-  liabilityInfo: string | null;
-  representedByAttorney: boolean | null;
   leadScore: number | null;
   leadStatus: string | null;
   assignedSalesExecutiveId: number | null;
-  convertedFromIntakeDraftId: number | null;
   notes: string | null;
-  incidentDescription: string | null;
-  insuranceInfo: string | null;
-  extraCapturedData: Record<string, unknown>;
-  rawConversation: unknown[] | null;
-  rawExtractedData: Record<string, unknown> | null;
+  customFields?: Record<string, unknown> | null;
+  rawConversation: Record<string, unknown>[] | null;
   aiSummary: string | null;
-  aiScore: number | null;
-  aiAnalysisStatus: string | null;
+  aiNextAction?: string | null;
+  aiMissingFields?: string[] | null;
+  score?: number | null;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
+  messages?: unknown[];
+  assignedSalesExecutive?: AppUser | null;
 }
 
 export interface LeadAssignment {
@@ -289,29 +290,34 @@ export interface CreateLeadInput {
   isDecisionMaker?: boolean | null;
   aiProvider?: string | null;
   aiModel?: string | null;
-  caseType?: string | null;
-  caseTypeOther?: string | null;
-  caseTypeText?: string | null;
-  injuryType?: string | null;
-  injuryTypeOther?: string | null;
-  injurySummary?: string | null;
-  incidentDate?: string | null;
   location?: string | null;
   preferredContactMethod?: string | null;
-  incidentDescription?: string | null;
-  medicalTreatment?: string | null;
-  liabilityInfo?: string | null;
-  insuranceInfo?: string | null;
-  representedByAttorney?: boolean | null;
   notes?: string | null;
   leadScore?: number | null;
   leadStatus?: string | null;
-  extraCapturedData?: Record<string, unknown>;
-  rawConversation?: unknown[] | null;
-  rawExtractedData?: Record<string, unknown> | null;
+  customFields?: Record<string, unknown> | null;
+  rawConversation?: Record<string, unknown>[] | null;
   aiSummary?: string | null;
-  aiScore?: number | null;
-  aiAnalysisStatus?: string | null;
+}
+
+export interface CreatePublicLeadInput {
+  name: string;
+  phone: string;
+  email: string;
+  projectDetails: string;
+  source?: string | null;
+  sourceLabel?: string | null;
+  campaign?: string | null;
+  medium?: string | null;
+  channel?: string | null;
+  pageUrl?: string | null;
+  referrerUrl?: string | null;
+  gclid?: string | null;
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
+  utmTerm?: string | null;
+  utmContent?: string | null;
 }
 
 export type UpdateLeadInput = CreateLeadInput;

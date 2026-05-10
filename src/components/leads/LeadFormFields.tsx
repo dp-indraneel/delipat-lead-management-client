@@ -4,6 +4,7 @@ import {
   calculateLeadScore,
   calculateLeadStatusFromScore,
   createOptions,
+  formatEnumLabel,
   LEAD_CHATBOT_SOURCE,
   LEAD_PROJECT_TYPES,
   LEAD_RECORD_STATUSES,
@@ -16,6 +17,7 @@ import type { CreateLeadInput } from "../../types/api";
 interface Props {
   form: CreateLeadInput;
   onChange: (value: CreateLeadInput) => void;
+  showAiSummaryField?: boolean;
 }
 
 const sourceOptions = createOptions(LEAD_SOURCES);
@@ -25,7 +27,7 @@ const recordStatusOptions = createOptions(LEAD_RECORD_STATUSES);
 const aiProviderOptions = createOptions(AI_PROVIDERS);
 const preferredContactOptions = createOptions(PREFERRED_CONTACT_METHODS);
 
-export default function LeadFormFields({ form, onChange }: Props) {
+export default function LeadFormFields({ form, onChange, showAiSummaryField = false }: Props) {
   const setField = <K extends keyof CreateLeadInput>(key: K, value: CreateLeadInput[K]) => {
     onChange({
       ...form,
@@ -37,192 +39,217 @@ export default function LeadFormFields({ form, onChange }: Props) {
     ...form,
     serviceTypeText: form.serviceType === "OTHER" ? form.serviceTypeOther : null,
     projectTypeText: form.projectType === "OTHER" ? form.projectTypeOther : null,
-    customFields: form.extraCapturedData ?? null,
   });
   const calculatedHotness = calculateLeadStatusFromScore(calculatedScore);
   const isChatbotLead = form.source === LEAD_CHATBOT_SOURCE;
+  const shouldShowAiSummaryField = isChatbotLead || showAiSummaryField;
 
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard label="Lead Score" value={`${calculatedScore}/100`} />
         <MetricCard label="Lead Hotness" value={calculatedHotness || "-"} />
-        <MetricCard label="Source" value={form.source || "-"} />
-        <MetricCard label="Status" value={form.status || "-"} />
+        <MetricCard label="Source" value={form.source ? formatEnumLabel(form.source) : "-"} />
+        <MetricCard label="Status" value={form.status ? formatEnumLabel(form.status) : "-"} />
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <input
+        <TextField
+          id="full-name"
+          label="Full name"
           value={form.fullName || ""}
           onChange={(event) => setField("fullName", event.target.value)}
           placeholder="Full name"
-          className="h-11 rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] px-3 text-sm text-[#013144] outline-none"
         />
-        <input
+        <TextField
+          id="job-title"
+          label="Job title"
           value={form.jobTitle || ""}
           onChange={(event) => setField("jobTitle", event.target.value)}
           placeholder="Job title"
-          className="h-11 rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] px-3 text-sm text-[#013144] outline-none"
         />
-        <input
+        <TextField
+          id="email"
+          label="Email"
           value={form.email || ""}
           onChange={(event) => setField("email", event.target.value)}
           placeholder="Email"
           type="email"
-          className="h-11 rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] px-3 text-sm text-[#013144] outline-none"
         />
-        <input
+        <TextField
+          id="phone"
+          label="Phone"
           value={form.phone || ""}
           onChange={(event) => setField("phone", event.target.value)}
           placeholder="Phone"
-          className="h-11 rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] px-3 text-sm text-[#013144] outline-none"
         />
-        <input
+        <TextField
+          id="company-name"
+          label="Company name"
           value={form.companyName || ""}
           onChange={(event) => setField("companyName", event.target.value)}
           placeholder="Company name"
-          className="h-11 rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] px-3 text-sm text-[#013144] outline-none"
         />
-        <input
+        <TextField
+          id="company-website"
+          label="Company website"
           value={form.companyWebsite || ""}
           onChange={(event) => setField("companyWebsite", event.target.value)}
           placeholder="Company website"
-          className="h-11 rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] px-3 text-sm text-[#013144] outline-none"
         />
-        <input
+        <TextField
+          id="business-type"
+          label="Business type"
           value={form.businessType || ""}
           onChange={(event) => setField("businessType", event.target.value)}
           placeholder="Business type"
-          className="h-11 rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] px-3 text-sm text-[#013144] outline-none"
         />
-        <input
+        <TextField
+          id="location"
+          label="Location"
           value={form.location || ""}
           onChange={(event) => setField("location", event.target.value)}
           placeholder="Location"
-          className="h-11 rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] px-3 text-sm text-[#013144] outline-none"
         />
-        <SearchableSelect
-          options={sourceOptions}
-          value={form.source || ""}
-          placeholder="Select a lead source"
-          isClearable={false}
-          onChange={(value) => setField("source", value)}
-        />
-        <SearchableSelect
-          options={recordStatusOptions}
-          value={form.status || ""}
-          placeholder="Select a record status"
-          isClearable={false}
-          onChange={(value) => setField("status", value)}
-        />
-        <SearchableSelect
-          options={serviceTypeOptions}
-          value={form.serviceType || ""}
-          placeholder="Select a service type"
-          isClearable={false}
-          onChange={(value) => setField("serviceType", value)}
-        />
-        <SearchableSelect
-          options={projectTypeOptions}
-          value={form.projectType || ""}
-          placeholder="Select a project type"
-          isClearable={false}
-          onChange={(value) => setField("projectType", value)}
-        />
+        <SelectField label="Lead source">
+          <SearchableSelect
+            options={sourceOptions}
+            value={form.source || ""}
+            placeholder="Select a lead source"
+            isClearable={false}
+            onChange={(value) => setField("source", value)}
+          />
+        </SelectField>
+        <SelectField label="Record status">
+          <SearchableSelect
+            options={recordStatusOptions}
+            value={form.status || ""}
+            placeholder="Select a record status"
+            isClearable={false}
+            onChange={(value) => setField("status", value)}
+          />
+        </SelectField>
+        <SelectField label="Service type">
+          <SearchableSelect
+            options={serviceTypeOptions}
+            value={form.serviceType || ""}
+            placeholder="Select a service type"
+            isClearable={false}
+            onChange={(value) => setField("serviceType", value)}
+          />
+        </SelectField>
+        <SelectField label="Project type">
+          <SearchableSelect
+            options={projectTypeOptions}
+            value={form.projectType || ""}
+            placeholder="Select a project type"
+            isClearable={false}
+            onChange={(value) => setField("projectType", value)}
+          />
+        </SelectField>
         {form.serviceType === "OTHER" ? (
-          <input
+          <TextField
+            id="service-type-other"
+            label="Other service type"
             value={form.serviceTypeOther || ""}
             onChange={(event) => setField("serviceTypeOther", event.target.value)}
             placeholder="Enter service type"
-            className="h-11 rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] px-3 text-sm text-[#013144] outline-none"
           />
         ) : null}
         {form.projectType === "OTHER" ? (
-          <input
+          <TextField
+            id="project-type-other"
+            label="Other project type"
             value={form.projectTypeOther || ""}
             onChange={(event) => setField("projectTypeOther", event.target.value)}
             placeholder="Enter project type"
-            className="h-11 rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] px-3 text-sm text-[#013144] outline-none"
           />
         ) : null}
-        <input
+        <TextField
+          id="project-budget"
+          label="Project budget"
           value={form.projectBudget || ""}
           onChange={(event) => setField("projectBudget", event.target.value)}
           placeholder="Project budget"
-          className="h-11 rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] px-3 text-sm text-[#013144] outline-none"
         />
-        <input
+        <TextField
+          id="project-timeline"
+          label="Project timeline"
           value={form.projectTimeline || ""}
           onChange={(event) => setField("projectTimeline", event.target.value)}
           placeholder="Project timeline"
-          className="h-11 rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] px-3 text-sm text-[#013144] outline-none"
         />
-        <SearchableSelect
-          options={preferredContactOptions}
-          value={form.preferredContactMethod || ""}
-          placeholder="Select a contact method"
-          onChange={(value) => setField("preferredContactMethod", value)}
-        />
-        {isChatbotLead ? (
+        <SelectField label="Preferred contact method">
           <SearchableSelect
-            options={aiProviderOptions}
-            value={form.aiProvider || ""}
-            placeholder="Select an AI provider"
-            onChange={(value) => setField("aiProvider", value)}
+            options={preferredContactOptions}
+            value={form.preferredContactMethod || ""}
+            placeholder="Select a contact method"
+            onChange={(value) => setField("preferredContactMethod", value)}
           />
+        </SelectField>
+        {isChatbotLead ? (
+          <SelectField label="AI provider">
+            <SearchableSelect
+              options={aiProviderOptions}
+              value={form.aiProvider || ""}
+              placeholder="Select an AI provider"
+              onChange={(value) => setField("aiProvider", value)}
+            />
+          </SelectField>
         ) : null}
         {isChatbotLead ? (
-          <input
+          <TextField
+            id="ai-model"
+            label="AI model"
             value={form.aiModel || ""}
             onChange={(event) => setField("aiModel", event.target.value)}
             placeholder="AI model"
-            className="h-11 rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] px-3 text-sm text-[#013144] outline-none"
           />
         ) : null}
       </div>
 
-      <textarea
+      <TextAreaField
+        id="project-description"
+        label="Project description"
         value={form.projectDescription || ""}
         onChange={(event) => setField("projectDescription", event.target.value)}
-        rows={4}
         placeholder="Project description"
-        className="w-full rounded-2xl border border-[#013144]/12 bg-[#013144]/[0.04] px-4 py-3 text-sm text-[#013144] outline-none"
       />
-      <textarea
+      <TextAreaField
+        id="current-challenges"
+        label="Current challenges"
         value={form.currentChallenges || ""}
         onChange={(event) => setField("currentChallenges", event.target.value)}
-        rows={4}
         placeholder="Current challenges"
-        className="w-full rounded-2xl border border-[#013144]/12 bg-[#013144]/[0.04] px-4 py-3 text-sm text-[#013144] outline-none"
       />
-      <textarea
+      <TextAreaField
+        id="expected-features"
+        label="Expected features"
         value={form.expectedFeatures || ""}
         onChange={(event) => setField("expectedFeatures", event.target.value)}
-        rows={4}
         placeholder="Expected features"
-        className="w-full rounded-2xl border border-[#013144]/12 bg-[#013144]/[0.04] px-4 py-3 text-sm text-[#013144] outline-none"
       />
-      <textarea
+      <TextAreaField
+        id="tech-stack"
+        label="Preferred tech stack"
         value={form.techStack || ""}
         onChange={(event) => setField("techStack", event.target.value)}
-        rows={4}
         placeholder="Preferred tech stack"
-        className="w-full rounded-2xl border border-[#013144]/12 bg-[#013144]/[0.04] px-4 py-3 text-sm text-[#013144] outline-none"
       />
-      <textarea
+      <TextAreaField
+        id="notes"
+        label="Internal notes"
         value={form.notes || ""}
         onChange={(event) => setField("notes", event.target.value)}
-        rows={4}
         placeholder="Internal notes"
-        className="w-full rounded-2xl border border-[#013144]/12 bg-[#013144]/[0.04] px-4 py-3 text-sm text-[#013144] outline-none"
       />
-      {isChatbotLead || form.aiSummary ? (
-        <textarea
+      {shouldShowAiSummaryField ? (
+        <TextAreaField
+          id="ai-summary"
+          label="AI summary"
           value={form.aiSummary || ""}
           onChange={(event) => setField("aiSummary", event.target.value)}
-          rows={4}
           placeholder="AI summary"
-          className="w-full rounded-2xl border border-[#013144]/12 bg-[#013144]/[0.04] px-4 py-3 text-sm text-[#013144] outline-none"
         />
       ) : null}
 
@@ -249,6 +276,64 @@ function MetricCard({ label, value }: { label: string; value: string }) {
     <div className="rounded-2xl border border-[#013144]/12 bg-[#013144]/[0.04] px-4 py-3">
       <p className="text-xs uppercase tracking-wide text-[#013144]/45">{label}</p>
       <p className="mt-2 text-lg font-semibold text-[#013144]">{value}</p>
+    </div>
+  );
+}
+
+interface TextFieldProps {
+  id: string;
+  label: string;
+  value: string;
+  onChange: React.ChangeEventHandler<HTMLInputElement>;
+  placeholder: string;
+  type?: string;
+}
+
+function TextField({ id, label, value, onChange, placeholder, type = "text" }: TextFieldProps) {
+  return (
+    <label htmlFor={id} className="space-y-2">
+      <span className="block text-xs font-medium uppercase tracking-wide text-[#013144]/60">{label}</span>
+      <input
+        id={id}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        type={type}
+        className="h-11 w-full rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] px-3 text-sm text-[#013144] outline-none"
+      />
+    </label>
+  );
+}
+
+interface TextAreaFieldProps {
+  id: string;
+  label: string;
+  value: string;
+  onChange: React.ChangeEventHandler<HTMLTextAreaElement>;
+  placeholder: string;
+}
+
+function TextAreaField({ id, label, value, onChange, placeholder }: TextAreaFieldProps) {
+  return (
+    <label htmlFor={id} className="block space-y-2">
+      <span className="block text-xs font-medium uppercase tracking-wide text-[#013144]/60">{label}</span>
+      <textarea
+        id={id}
+        value={value}
+        onChange={onChange}
+        rows={4}
+        placeholder={placeholder}
+        className="w-full rounded-2xl border border-[#013144]/12 bg-[#013144]/[0.04] px-4 py-3 text-sm text-[#013144] outline-none"
+      />
+    </label>
+  );
+}
+
+function SelectField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-2">
+      <span className="block text-xs font-medium uppercase tracking-wide text-[#013144]/60">{label}</span>
+      {children}
     </div>
   );
 }
