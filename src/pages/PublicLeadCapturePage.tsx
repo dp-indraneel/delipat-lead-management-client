@@ -11,6 +11,7 @@ type PublicLeadForm = {
 };
 
 const DEFAULT_SOURCE = "GOOGLE_ADS";
+const MAX_TRACKING_URL_LENGTH = 255;
 
 export default function PublicLeadCapturePage() {
   const [form, setForm] = useState<PublicLeadForm>({
@@ -197,7 +198,7 @@ function getTrackingPayload(): Required<
   }
 
   const params = new URLSearchParams(window.location.search);
-  const currentUrl = window.location.href;
+  const currentUrl = toStoredUrl(window.location.href, true);
   const referrer = document.referrer || "";
 
   return {
@@ -208,8 +209,8 @@ function getTrackingPayload(): Required<
     campaign: readParam(params, ["campaign"]) || "",
     medium: readParam(params, ["medium"]) || "",
     channel: readParam(params, ["channel"]) || "",
-    pageUrl: readParam(params, ["pageUrl", "page_url"]) || currentUrl,
-    referrerUrl: readParam(params, ["referrerUrl", "referrer_url"]) || referrer,
+    pageUrl: toStoredUrl(readParam(params, ["pageUrl", "page_url"]) || currentUrl, true),
+    referrerUrl: toStoredUrl(readParam(params, ["referrerUrl", "referrer_url"]) || referrer),
     gclid: readParam(params, ["gclid"]) || "",
     utmSource: readParam(params, ["utmSource", "utm_source"]) || "",
     utmMedium: readParam(params, ["utmMedium", "utm_medium"]) || "",
@@ -228,4 +229,20 @@ function readParam(params: URLSearchParams, keys: string[]) {
   }
 
   return "";
+}
+
+function toStoredUrl(value: string, stripQuery = false) {
+  if (!value) return "";
+
+  try {
+    const url = new URL(value);
+    if (stripQuery) {
+      url.search = "";
+      url.hash = "";
+    }
+
+    return url.toString().slice(0, MAX_TRACKING_URL_LENGTH);
+  } catch {
+    return value.trim().slice(0, MAX_TRACKING_URL_LENGTH);
+  }
 }
