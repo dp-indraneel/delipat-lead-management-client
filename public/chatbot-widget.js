@@ -30,6 +30,8 @@
     config: { ...DEFAULTS },
     elements: null,
     messages: [],
+    leadId: null,
+    waitingForReply: false,
   };
 
   function compactConfig(config) {
@@ -90,6 +92,26 @@
     }
   }
 
+  function loadLeadId(storageKey) {
+    try {
+      const raw = window.localStorage.getItem(`${storageKey}:lead-id`);
+      const parsed = Number(raw);
+      return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function saveLeadId(leadId) {
+    try {
+      if (leadId) {
+        window.localStorage.setItem(`${state.config.storageKey}:lead-id`, String(leadId));
+      }
+    } catch {
+      return;
+    }
+  }
+
   function createMessage(role, text) {
     return {
       id: `${role}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -119,15 +141,22 @@
 
     const candidates = [
       payload.reply,
+      payload.data && payload.data.reply,
+      payload.data && payload.data.message,
+      payload.data && payload.data.text,
       payload.message,
       payload.text,
       payload.answer,
       payload.response,
-      payload.data && payload.data.reply,
-      payload.data && payload.data.message,
     ];
 
     return candidates.find((value) => typeof value === "string" && value.trim()) || "";
+  }
+
+  function getLeadIdFromPayload(payload) {
+    const value = payload && (payload.leadId || (payload.data && payload.data.leadId));
+    const leadId = Number(value);
+    return Number.isInteger(leadId) && leadId > 0 ? leadId : null;
   }
 
   function injectStyles() {
@@ -154,20 +183,20 @@
 
       .${SCRIPT_NAME}-launcher {
         align-items: center;
-        background: linear-gradient(135deg, var(--chatbot-primary-color), #0b4f6c);
+        background: var(--chatbot-primary-color);
         border: 0;
         border-radius: 999px;
-        box-shadow: 0 18px 48px rgba(1, 49, 68, 0.28);
+        box-shadow: 0 16px 38px rgba(1, 49, 68, 0.28);
         color: #ffffff;
         cursor: pointer;
         display: inline-flex;
         gap: 10px;
-        padding: 14px 18px;
-        transition: transform 160ms ease, box-shadow 160ms ease;
+        padding: 12px 16px 12px 12px;
+        transition: transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
       }
 
       .${SCRIPT_NAME}-launcher:hover {
-        box-shadow: 0 22px 56px rgba(1, 49, 68, 0.34);
+        box-shadow: 0 20px 48px rgba(1, 49, 68, 0.34);
         transform: translateY(-1px);
       }
 
@@ -176,6 +205,8 @@
         background: rgba(255, 255, 255, 0.14);
         border-radius: 999px;
         display: inline-flex;
+        font-size: 16px;
+        font-weight: 800;
         height: 34px;
         justify-content: center;
         width: 34px;
@@ -184,17 +215,18 @@
       .${SCRIPT_NAME}-panel {
         background: #ffffff;
         border: 1px solid rgba(1, 49, 68, 0.12);
-        border-radius: 24px;
+        border-radius: 20px;
         bottom: 0;
-        box-shadow: 0 28px 80px rgba(15, 23, 42, 0.22);
+        box-shadow: 0 24px 70px rgba(15, 23, 42, 0.22);
         display: none;
         flex-direction: column;
-        height: min(680px, calc(100vh - 48px));
+        height: min(70vh, 620px);
+        min-height: 420px;
         margin-bottom: 76px;
         overflow: hidden;
         position: absolute;
         right: 0;
-        width: min(380px, calc(100vw - 24px));
+        width: min(360px, calc(100vw - 24px));
       }
 
       .${SCRIPT_NAME}-root[data-position="left"] .${SCRIPT_NAME}-panel {
@@ -208,10 +240,10 @@
 
       .${SCRIPT_NAME}-header {
         background:
-          radial-gradient(circle at top right, rgba(252, 182, 31, 0.38), transparent 34%),
-          linear-gradient(135deg, var(--chatbot-primary-color), #0a5d72);
+          radial-gradient(circle at top right, rgba(252, 182, 31, 0.28), transparent 32%),
+          var(--chatbot-primary-color);
         color: #ffffff;
-        padding: 20px 20px 18px;
+        padding: 18px 18px 16px;
       }
 
       .${SCRIPT_NAME}-header-top {
@@ -257,7 +289,7 @@
 
       .${SCRIPT_NAME}-messages {
         background:
-          linear-gradient(180deg, #f8fbfc, #ffffff 32%),
+          linear-gradient(180deg, #f7fafb, #ffffff 38%),
           #ffffff;
         display: flex;
         flex: 1;
@@ -286,7 +318,7 @@
       }
 
       .${SCRIPT_NAME}-message[data-role="bot"] .${SCRIPT_NAME}-bubble {
-        background: #eef3f6;
+        background: #edf3f6;
         border-bottom-left-radius: 6px;
         color: #013144;
       }
@@ -300,7 +332,7 @@
       .${SCRIPT_NAME}-composer {
         background: #ffffff;
         border-top: 1px solid rgba(1, 49, 68, 0.08);
-        padding: 14px;
+        padding: 12px;
       }
 
       .${SCRIPT_NAME}-composer-form {
@@ -312,14 +344,14 @@
       .${SCRIPT_NAME}-textarea {
         background: #f8fbfc;
         border: 1px solid rgba(1, 49, 68, 0.12);
-        border-radius: 18px;
+        border-radius: 16px;
         color: var(--chatbot-text-color);
         flex: 1;
         font: inherit;
         max-height: 132px;
-        min-height: 52px;
+        min-height: 48px;
         outline: none;
-        padding: 14px 16px;
+        padding: 13px 14px;
         resize: vertical;
       }
 
@@ -331,13 +363,57 @@
       .${SCRIPT_NAME}-send {
         background: var(--chatbot-accent-color);
         border: 0;
-        border-radius: 16px;
+        border-radius: 14px;
         color: #013144;
         cursor: pointer;
         font-weight: 700;
-        min-height: 52px;
-        padding: 0 18px;
+        min-height: 48px;
+        padding: 0 16px;
+        transition: opacity 160ms ease, transform 160ms ease;
         white-space: nowrap;
+      }
+
+      .${SCRIPT_NAME}-send:disabled,
+      .${SCRIPT_NAME}-textarea:disabled {
+        cursor: not-allowed;
+        opacity: 0.64;
+      }
+
+      .${SCRIPT_NAME}-typing-dots {
+        align-items: center;
+        display: inline-flex;
+        gap: 5px;
+        height: 16px;
+        padding: 1px 2px;
+      }
+
+      .${SCRIPT_NAME}-typing-dots span {
+        animation: ${SCRIPT_NAME}-typing-pulse 1s infinite ease-in-out;
+        background: rgba(1, 49, 68, 0.54);
+        border-radius: 999px;
+        display: block;
+        height: 6px;
+        width: 6px;
+      }
+
+      .${SCRIPT_NAME}-typing-dots span:nth-child(2) {
+        animation-delay: 140ms;
+      }
+
+      .${SCRIPT_NAME}-typing-dots span:nth-child(3) {
+        animation-delay: 280ms;
+      }
+
+      @keyframes ${SCRIPT_NAME}-typing-pulse {
+        0%, 80%, 100% {
+          opacity: 0.34;
+          transform: translateY(0);
+        }
+
+        40% {
+          opacity: 1;
+          transform: translateY(-3px);
+        }
       }
 
       .${SCRIPT_NAME}-note {
@@ -361,7 +437,7 @@
           right: 18px;
         }
 
-        .${SCRIPT_NAME}-root[data-positiaion="left"] .${SCRIPT_NAME}-launcher {
+        .${SCRIPT_NAME}-root[data-position="left"] .${SCRIPT_NAME}-launcher {
           left: 18px;
           right: auto;
         }
@@ -370,7 +446,8 @@
         .${SCRIPT_NAME}-root[data-position="left"] .${SCRIPT_NAME}-panel {
           border-bottom-left-radius: 0;
           border-bottom-right-radius: 0;
-          height: min(78vh, 720px);
+          height: min(70vh, 620px);
+          min-height: 360px;
           left: 0;
           margin-bottom: 0;
           right: 0;
@@ -402,7 +479,38 @@
       state.elements.messages.appendChild(wrapper);
     });
 
+    if (state.waitingForReply) {
+      const wrapper = document.createElement("div");
+      wrapper.className = `${SCRIPT_NAME}-message`;
+      wrapper.dataset.role = "bot";
+
+      const bubble = document.createElement("div");
+      bubble.className = `${SCRIPT_NAME}-bubble`;
+      bubble.innerHTML = `
+        <span class="${SCRIPT_NAME}-typing-dots" aria-label="Typing">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
+      `;
+
+      wrapper.appendChild(bubble);
+      state.elements.messages.appendChild(wrapper);
+    }
+
     state.elements.messages.scrollTop = state.elements.messages.scrollHeight;
+  }
+
+  function setWaitingForReply(waiting) {
+    state.waitingForReply = waiting;
+
+    if (state.elements) {
+      state.elements.textarea.disabled = waiting;
+      state.elements.send.disabled = waiting;
+      state.elements.send.textContent = "Send";
+    }
+
+    renderMessages();
   }
 
   function setOpen(open) {
@@ -431,6 +539,7 @@
 
   async function sendMessage(text) {
     pushMessage("user", text);
+    setWaitingForReply(true);
 
     if (typeof state.config.onMessageSent === "function") {
       try {
@@ -441,6 +550,7 @@
     }
 
     if (!state.config.webhookUrl) {
+      setWaitingForReply(false);
       pushMessage(
         "bot",
         "Thanks! Your message has been captured. Connect a webhook URL to return a live bot reply.",
@@ -456,6 +566,7 @@
           ...state.config.webhookHeaders,
         },
         body: JSON.stringify({
+          leadId: state.leadId || undefined,
           message: text,
           messages: state.messages,
           pageUrl: window.location.href,
@@ -465,13 +576,21 @@
 
       const payload = await response.json().catch(() => null);
       const reply = getReplyFromPayload(payload);
+      const leadId = getLeadIdFromPayload(payload);
 
       if (!response.ok) {
         throw new Error(reply || `Request failed with status ${response.status}`);
       }
 
+      if (leadId) {
+        state.leadId = leadId;
+        saveLeadId(leadId);
+      }
+
+      setWaitingForReply(false);
       pushMessage("bot", reply || "Thanks! We received your message.");
     } catch (error) {
+      setWaitingForReply(false);
       pushMessage(
         "bot",
         error instanceof Error
@@ -526,9 +645,10 @@
     const close = root.querySelector(`.${SCRIPT_NAME}-close`);
     const form = root.querySelector(`.${SCRIPT_NAME}-composer-form`);
     const textarea = root.querySelector(`.${SCRIPT_NAME}-textarea`);
+    const send = root.querySelector(`.${SCRIPT_NAME}-send`);
     const messages = root.querySelector(`.${SCRIPT_NAME}-messages`);
 
-    state.elements = { root, launcher, close, form, textarea, messages };
+    state.elements = { root, launcher, close, form, textarea, send, messages };
 
     launcher.addEventListener("click", function () {
       setOpen(!state.open);
@@ -542,7 +662,7 @@
       event.preventDefault();
 
       const value = textarea.value.trim();
-      if (!value) {
+      if (!value || state.waitingForReply) {
         return;
       }
 
@@ -584,6 +704,7 @@
     };
 
     state.messages = loadMessages(state.config.storageKey);
+    state.leadId = loadLeadId(state.config.storageKey);
     ensureWelcomeMessage();
 
     if (!state.mounted) {
