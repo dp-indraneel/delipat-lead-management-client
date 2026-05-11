@@ -1,5 +1,8 @@
 (function () {
   const SCRIPT_NAME = "delipat-chatbot-widget";
+  const DEFAULT_WELCOME_MESSAGE =
+    "Welcome to Delipat, your lead management support team. How can we help you today?";
+  const LEGACY_WELCOME_MESSAGES = ["Hi! How can we help you today?"];
 
   if (window.DelipatChatbot) {
     return;
@@ -8,7 +11,7 @@
   const DEFAULTS = {
     title: "Chat Support",
     subtitle: "We typically reply in a few moments.",
-    welcomeMessage: "Hi! How can we help you today?",
+    welcomeMessage: DEFAULT_WELCOME_MESSAGE,
     placeholder: "Type your message...",
     buttonLabel: "Chat",
     primaryColor: "#013144",
@@ -122,12 +125,28 @@
   }
 
   function ensureWelcomeMessage() {
-    if (state.messages.length > 0) {
+    if (state.messages.length === 0) {
+      state.messages = [createMessage("bot", state.config.welcomeMessage)];
+      saveMessages();
       return;
     }
 
-    state.messages = [createMessage("bot", state.config.welcomeMessage)];
-    saveMessages();
+    const firstMessage = state.messages[0];
+
+    if (
+      firstMessage &&
+      firstMessage.role === "bot" &&
+      LEGACY_WELCOME_MESSAGES.includes(firstMessage.text)
+    ) {
+      state.messages = [
+        {
+          ...firstMessage,
+          text: state.config.welcomeMessage,
+        },
+        ...state.messages.slice(1),
+      ];
+      saveMessages();
+    }
   }
 
   function getReplyFromPayload(payload) {
