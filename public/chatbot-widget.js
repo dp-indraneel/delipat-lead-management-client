@@ -308,9 +308,7 @@
 
       .${SCRIPT_NAME}-close {
         align-items: center;
-        background: rgba(255, 255, 255, 0.12);
         border: 0;
-        border-radius: 12px;
         color: #ffffff;
         cursor: pointer;
         display: inline-flex;
