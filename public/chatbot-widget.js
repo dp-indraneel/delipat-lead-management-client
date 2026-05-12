@@ -195,6 +195,12 @@
         color: var(--chatbot-text-color);
       }
 
+      .${SCRIPT_NAME}-root *,
+      .${SCRIPT_NAME}-root *::before,
+      .${SCRIPT_NAME}-root *::after {
+        box-sizing: border-box;
+      }
+
       .${SCRIPT_NAME}-root[data-position="left"] {
         left: 24px;
         right: auto;
@@ -231,6 +237,10 @@
         width: 34px;
       }
 
+      .${SCRIPT_NAME}-launcher-icon svg {
+        display: block;
+      }
+
       .${SCRIPT_NAME}-panel {
         background: #ffffff;
         border: 1px solid rgba(1, 49, 68, 0.12);
@@ -242,6 +252,7 @@
         height: min(70vh, 620px);
         min-height: 420px;
         margin-bottom: 76px;
+        overscroll-behavior: contain;
         overflow: hidden;
         position: absolute;
         right: 0;
@@ -296,13 +307,18 @@
       }
 
       .${SCRIPT_NAME}-close {
+        align-items: center;
         background: rgba(255, 255, 255, 0.12);
         border: 0;
         border-radius: 12px;
         color: #ffffff;
         cursor: pointer;
-        font-size: 18px;
+        display: inline-flex;
+        font-size: 28px;
         height: 40px;
+        justify-content: center;
+        line-height: 1;
+        padding: 0;
         width: 40px;
       }
 
@@ -314,8 +330,28 @@
         flex: 1;
         flex-direction: column;
         gap: 12px;
+        min-height: 0;
+        overscroll-behavior: contain;
         overflow-y: auto;
         padding: 18px;
+        scrollbar-color: rgba(1, 49, 68, 0.24) transparent;
+        scrollbar-width: thin;
+        touch-action: pan-y;
+      }
+
+      .${SCRIPT_NAME}-messages::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      .${SCRIPT_NAME}-messages::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      .${SCRIPT_NAME}-messages::-webkit-scrollbar-thumb {
+        background: rgba(1, 49, 68, 0.2);
+        border: 2px solid transparent;
+        border-radius: 999px;
+        background-clip: content-box;
       }
 
       .${SCRIPT_NAME}-message {
@@ -346,6 +382,16 @@
         background: var(--chatbot-primary-color);
         border-bottom-right-radius: 6px;
         color: #ffffff;
+      }
+
+      .${SCRIPT_NAME}-typing-bubble {
+        align-items: center;
+        background: #ffffff !important;
+        border: 1px solid rgba(1, 49, 68, 0.08);
+        box-shadow: 0 8px 22px rgba(1, 49, 68, 0.08);
+        display: inline-flex;
+        min-height: 22px;
+        padding: 10px 13px;
       }
 
       .${SCRIPT_NAME}-composer {
@@ -401,18 +447,21 @@
       .${SCRIPT_NAME}-typing-dots {
         align-items: center;
         display: inline-flex;
-        gap: 5px;
-        height: 16px;
-        padding: 1px 2px;
+        gap: 6px;
+        height: 18px;
+        padding: 0 1px;
       }
 
       .${SCRIPT_NAME}-typing-dots span {
-        animation: ${SCRIPT_NAME}-typing-pulse 1s infinite ease-in-out;
-        background: rgba(1, 49, 68, 0.54);
+        animation: ${SCRIPT_NAME}-typing-pulse 1.15s infinite cubic-bezier(0.4, 0, 0.2, 1);
+        background: linear-gradient(180deg, var(--chatbot-accent-color), #d99a0c);
+        box-shadow: 0 2px 5px rgba(1, 49, 68, 0.12);
         border-radius: 999px;
         display: block;
-        height: 6px;
-        width: 6px;
+        height: 7px;
+        opacity: 0.48;
+        transform-origin: center bottom;
+        width: 7px;
       }
 
       .${SCRIPT_NAME}-typing-dots span:nth-child(2) {
@@ -424,14 +473,14 @@
       }
 
       @keyframes ${SCRIPT_NAME}-typing-pulse {
-        0%, 80%, 100% {
-          opacity: 0.34;
-          transform: translateY(0);
+        0%, 70%, 100% {
+          opacity: 0.42;
+          transform: translateY(0) scale(0.86);
         }
 
-        40% {
+        35% {
           opacity: 1;
-          transform: translateY(-3px);
+          transform: translateY(-4px) scale(1);
         }
       }
 
@@ -448,29 +497,138 @@
           bottom: 0;
           left: 0;
           right: 0;
+          top: 0;
+          pointer-events: none;
         }
 
         .${SCRIPT_NAME}-launcher {
-          bottom: 18px;
+          bottom: max(16px, env(safe-area-inset-bottom));
+          box-shadow: 0 14px 34px rgba(1, 49, 68, 0.3);
+          pointer-events: auto;
           position: fixed;
-          right: 18px;
+          right: 16px;
+          padding: 11px 15px 11px 11px;
         }
 
         .${SCRIPT_NAME}-root[data-position="left"] .${SCRIPT_NAME}-launcher {
-          left: 18px;
+          left: 16px;
           right: auto;
+        }
+
+        .${SCRIPT_NAME}-root[data-open="true"] .${SCRIPT_NAME}-launcher {
+          opacity: 0;
+          pointer-events: none;
+          transform: translateY(8px);
         }
 
         .${SCRIPT_NAME}-panel,
         .${SCRIPT_NAME}-root[data-position="left"] .${SCRIPT_NAME}-panel {
-          border-bottom-left-radius: 0;
-          border-bottom-right-radius: 0;
-          height: min(70vh, 620px);
-          min-height: 360px;
+          border-radius: 18px 18px 0 0;
+          bottom: 0;
+          box-shadow: 0 -18px 54px rgba(15, 23, 42, 0.22);
+          height: min(720px, 92vh);
+          height: min(720px, 92dvh);
+          max-height: calc(100vh - 10px);
+          max-height: calc(100dvh - 10px);
+          min-height: 0;
           left: 0;
           margin-bottom: 0;
+          pointer-events: auto;
           right: 0;
           width: 100vw;
+        }
+
+        .${SCRIPT_NAME}-header {
+          padding: 14px 14px 13px;
+        }
+
+        .${SCRIPT_NAME}-header-top {
+          align-items: center;
+          gap: 12px;
+        }
+
+        .${SCRIPT_NAME}-eyebrow {
+          font-size: 10px;
+          letter-spacing: 0.06em;
+          margin-bottom: 5px;
+          max-width: calc(100vw - 92px);
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .${SCRIPT_NAME}-title {
+          font-size: 17px;
+          line-height: 1.25;
+        }
+
+        .${SCRIPT_NAME}-subtitle {
+          font-size: 12px;
+          line-height: 1.35;
+          margin-top: 4px;
+        }
+
+        .${SCRIPT_NAME}-close {
+          border-radius: 11px;
+          flex: 0 0 auto;
+          height: 38px;
+          width: 38px;
+        }
+
+        .${SCRIPT_NAME}-messages {
+          gap: 10px;
+          padding: 14px 12px;
+        }
+
+        .${SCRIPT_NAME}-bubble {
+          border-radius: 16px;
+          font-size: 14px;
+          line-height: 1.45;
+          max-width: 88%;
+          padding: 10px 12px;
+        }
+
+        .${SCRIPT_NAME}-composer {
+          padding: 10px 10px max(10px, env(safe-area-inset-bottom));
+        }
+
+        .${SCRIPT_NAME}-composer-form {
+          gap: 8px;
+        }
+
+        .${SCRIPT_NAME}-textarea {
+          border-radius: 14px;
+          font-size: 16px;
+          max-height: 104px;
+          min-height: 44px;
+          padding: 11px 12px;
+          resize: none;
+        }
+
+        .${SCRIPT_NAME}-send {
+          border-radius: 13px;
+          min-height: 44px;
+          min-width: 66px;
+          padding: 0 13px;
+        }
+
+        .${SCRIPT_NAME}-note {
+          display: none;
+        }
+      }
+
+      @media (max-width: 380px) {
+        .${SCRIPT_NAME}-panel,
+        .${SCRIPT_NAME}-root[data-position="left"] .${SCRIPT_NAME}-panel {
+          height: 94dvh;
+        }
+
+        .${SCRIPT_NAME}-subtitle {
+          display: none;
+        }
+
+        .${SCRIPT_NAME}-bubble {
+          max-width: 92%;
         }
       }
     `;
@@ -504,7 +662,7 @@
       wrapper.dataset.role = "bot";
 
       const bubble = document.createElement("div");
-      bubble.className = `${SCRIPT_NAME}-bubble`;
+      bubble.className = `${SCRIPT_NAME}-bubble ${SCRIPT_NAME}-typing-bubble`;
       bubble.innerHTML = `
         <span class="${SCRIPT_NAME}-typing-dots" aria-label="Typing">
           <span></span>
@@ -518,6 +676,101 @@
     }
 
     state.elements.messages.scrollTop = state.elements.messages.scrollHeight;
+  }
+
+  function lockScrollToMessages(panel, messages) {
+    let lastTouchY = 0;
+    let panelLastTouchY = 0;
+
+    function scrollMessagesBy(deltaY) {
+      messages.scrollTop += deltaY;
+    }
+
+    messages.addEventListener(
+      "wheel",
+      function (event) {
+        const isVerticalScroll = Math.abs(event.deltaY) >= Math.abs(event.deltaX);
+
+        if (!state.open || !isVerticalScroll) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        scrollMessagesBy(event.deltaY);
+      },
+      { passive: false },
+    );
+
+    panel.addEventListener(
+      "wheel",
+      function (event) {
+        const isVerticalScroll = Math.abs(event.deltaY) >= Math.abs(event.deltaX);
+
+        if (!state.open || !isVerticalScroll) {
+          return;
+        }
+
+        event.preventDefault();
+        scrollMessagesBy(event.deltaY);
+      },
+      { passive: false },
+    );
+
+    messages.addEventListener(
+      "touchstart",
+      function (event) {
+        if (event.touches.length === 1) {
+          lastTouchY = event.touches[0].clientY;
+        }
+      },
+      { passive: true },
+    );
+
+    messages.addEventListener(
+      "touchmove",
+      function (event) {
+        if (!state.open || event.touches.length !== 1) {
+          return;
+        }
+
+        const nextTouchY = event.touches[0].clientY;
+        const deltaY = lastTouchY - nextTouchY;
+        lastTouchY = nextTouchY;
+
+        event.preventDefault();
+        event.stopPropagation();
+        scrollMessagesBy(deltaY);
+      },
+      { passive: false },
+    );
+
+    panel.addEventListener(
+      "touchstart",
+      function (event) {
+        if (event.touches.length === 1) {
+          panelLastTouchY = event.touches[0].clientY;
+        }
+      },
+      { passive: true },
+    );
+
+    panel.addEventListener(
+      "touchmove",
+      function (event) {
+        if (!state.open || event.touches.length !== 1) {
+          return;
+        }
+
+        const nextTouchY = event.touches[0].clientY;
+        const deltaY = panelLastTouchY - nextTouchY;
+        panelLastTouchY = nextTouchY;
+
+        event.preventDefault();
+        scrollMessagesBy(deltaY);
+      },
+      { passive: false },
+    );
   }
 
   function setWaitingForReply(waiting) {
@@ -544,7 +797,10 @@
 
     if (open) {
       window.setTimeout(() => {
-        state.elements.textarea.focus();
+        if (!window.matchMedia("(max-width: 640px)").matches) {
+          state.elements.textarea.focus();
+        }
+
         state.elements.messages.scrollTop = state.elements.messages.scrollHeight;
       }, 20);
     }
@@ -636,11 +892,10 @@
         <div class="${SCRIPT_NAME}-header">
           <div class="${SCRIPT_NAME}-header-top">
             <div>
-              <span class="${SCRIPT_NAME}-eyebrow">${state.config.siteName}</span>
               <h2 class="${SCRIPT_NAME}-title">${state.config.title}</h2>
               <p class="${SCRIPT_NAME}-subtitle">${state.config.subtitle}</p>
             </div>
-            <button class="${SCRIPT_NAME}-close" type="button" aria-label="Close chat">×</button>
+            <button class="${SCRIPT_NAME}-close" type="button" aria-label="Close chat">&times;</button>
           </div>
         </div>
         <div class="${SCRIPT_NAME}-messages"></div>
@@ -649,11 +904,16 @@
             <textarea class="${SCRIPT_NAME}-textarea" rows="1" placeholder="${state.config.placeholder}"></textarea>
             <button class="${SCRIPT_NAME}-send" type="submit">Send</button>
           </form>
-          <div class="${SCRIPT_NAME}-note">Powered by ${state.config.siteName}</div>
         </div>
       </div>
       <button class="${SCRIPT_NAME}-launcher" type="button" aria-label="${state.config.buttonLabel}" aria-expanded="false">
-        <span class="${SCRIPT_NAME}-launcher-icon">💬</span>
+        <span class="${SCRIPT_NAME}-launcher-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 11.5a8.4 8.4 0 0 1-8.7 8.2 9.1 9.1 0 0 1-3.7-.8L3 20l1.3-4.4A8 8 0 0 1 3 11.5a8.4 8.4 0 0 1 8.7-8.2A8.4 8.4 0 0 1 21 11.5Z"></path>
+            <path d="M8 10.5h8"></path>
+            <path d="M8 14h5"></path>
+          </svg>
+        </span>
         <span>${state.config.buttonLabel}</span>
       </button>
     `;
@@ -665,9 +925,11 @@
     const form = root.querySelector(`.${SCRIPT_NAME}-composer-form`);
     const textarea = root.querySelector(`.${SCRIPT_NAME}-textarea`);
     const send = root.querySelector(`.${SCRIPT_NAME}-send`);
+    const panel = root.querySelector(`.${SCRIPT_NAME}-panel`);
     const messages = root.querySelector(`.${SCRIPT_NAME}-messages`);
 
-    state.elements = { root, launcher, close, form, textarea, send, messages };
+    state.elements = { root, launcher, close, form, textarea, send, panel, messages };
+    lockScrollToMessages(panel, messages);
 
     launcher.addEventListener("click", function () {
       setOpen(!state.open);
