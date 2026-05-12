@@ -71,7 +71,7 @@
 
   function loadMessages(storageKey) {
     try {
-      const raw = window.localStorage.getItem(storageKey);
+      const raw = window.sessionStorage.getItem(storageKey);
 
       if (!raw) {
         return [];
@@ -86,7 +86,7 @@
 
   function saveMessages() {
     try {
-      window.localStorage.setItem(
+      window.sessionStorage.setItem(
         state.config.storageKey,
         JSON.stringify(state.messages.slice(-state.config.maxMessages)),
       );
@@ -97,7 +97,7 @@
 
   function loadLeadId(storageKey) {
     try {
-      const raw = window.localStorage.getItem(`${storageKey}:lead-id`);
+      const raw = window.sessionStorage.getItem(`${storageKey}:lead-id`);
       const parsed = Number(raw);
       return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
     } catch {
@@ -108,7 +108,7 @@
   function saveLeadId(leadId) {
     try {
       if (leadId) {
-        window.localStorage.setItem(`${state.config.storageKey}:lead-id`, String(leadId));
+        window.sessionStorage.setItem(`${state.config.storageKey}:lead-id`, String(leadId));
       }
     } catch {
       return;
