@@ -947,7 +947,9 @@
 
       textarea.value = "";
       textarea.style.height = "auto";
+      textarea.focus();
       await sendMessage(value);
+      textarea.focus();
     });
 
     textarea.addEventListener("input", function () {

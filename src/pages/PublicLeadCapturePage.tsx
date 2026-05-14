@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
-import Button from "../components/ui/Button";
+import { ArrowRight, Check } from "lucide-react";
 import { leadApi } from "../lib/api";
 import type { CreatePublicLeadInput } from "../types/api";
 
 type PublicLeadForm = {
   name: string;
-  phone: string;
+  whatsappNumber: string;
   email: string;
   projectDetails: string;
 };
@@ -16,7 +16,7 @@ const MAX_TRACKING_URL_LENGTH = 255;
 export default function PublicLeadCapturePage() {
   const [form, setForm] = useState<PublicLeadForm>({
     name: "",
-    phone: "",
+    whatsappNumber: "",
     email: "",
     projectDetails: "",
   });
@@ -25,22 +25,39 @@ export default function PublicLeadCapturePage() {
   const [error, setError] = useState("");
 
   const trackingPayload = useMemo(() => getTrackingPayload(), []);
+  const requiredFields = [
+    form.name.trim(),
+    isEmailValid(form.email) ? form.email.trim() : "",
+    form.projectDetails.trim(),
+  ];
+  const completedRequiredFields = requiredFields.filter(Boolean).length;
+  const completionPercent = Math.round((completedRequiredFields / requiredFields.length) * 100);
+  const canSubmit = completedRequiredFields === requiredFields.length;
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (!canSubmit) {
+      return;
+    }
+
     setSubmitting(true);
     setError("");
 
     try {
       const payload: CreatePublicLeadInput = {
-        ...form,
+        name: form.name.trim(),
+        email: form.email.trim(),
+        projectDetails: form.projectDetails.trim(),
+        phone: form.whatsappNumber.trim(),
+        whatsappNumber: form.whatsappNumber.trim() || undefined,
         ...trackingPayload,
       };
       const response = await leadApi.createPublic(payload);
       setSubmittedLeadId(response.data.id);
       setForm({
         name: "",
-        phone: "",
+        whatsappNumber: "",
         email: "",
         projectDetails: "",
       });
@@ -52,52 +69,70 @@ export default function PublicLeadCapturePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(252,182,31,0.18),_transparent_36%),linear-gradient(180deg,_#fffaf0_0%,_#ffffff_42%,_#f4f8fa_100%)] px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-2xl">
-        <section className="rounded-[28px] border border-[#013144]/10 bg-white p-6 shadow-[0_24px_70px_rgba(1,49,68,0.1)] sm:p-8 lg:p-10">
-          <p className="inline-flex rounded-full border border-[#fcb61f]/40 bg-[#fcb61f]/12 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-[#8f5f00]">
+    <div className="min-h-screen bg-[linear-gradient(180deg,_#fff8e5_0%,_#ffffff_44%,_#f5f8f9_100%)] px-6 py-7 lg:px-8">
+      <div className="mx-auto max-w-xl">
+        <section className="">
+          <div className="mb-7 flex items-center justify-center">
+            <img
+              src="/logo.png"
+              alt="Delipat"
+              className="h-12 w-auto object-contain sm:h-14"
+            />
+          </div>
+          <p className="inline-flex rounded-md bg-[#fcb61f]/14 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8f5f00]">
             Get In Touch
           </p>
-          <h1 className="mt-5 text-3xl font-semibold leading-tight text-[#013144] sm:text-4xl">
-            Tell us about your CRM or lead management requirement.
+          <h1 className="mt-4 text-2xl font-semibold leading-tight text-[#013144] sm:text-3xl">
+            Tell us about your requirement.
           </h1>
-          <p className="mt-3 text-sm leading-6 text-[#013144]/65 sm:text-base">
-            Share your details below and our team will reach out to discuss the right next step.
-          </p>
 
           {submittedLeadId ? (
-            <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-              Your request was submitted successfully. Lead ID: {submittedLeadId}.
+            <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-700">
+              Your request was submitted successfully.
             </div>
           ) : null}
 
           {error ? (
-            <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
               {error}
             </div>
           ) : null}
 
-          <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
-            <div className="grid gap-5 sm:grid-cols-2">
+          <form className="mt-5 space-y-4" onSubmit={handleSubmit}>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs font-medium text-[#013144]/55">
+                <span>{completedRequiredFields} of {requiredFields.length} required fields ready</span>
+                <span>{completionPercent}%</span>
+              </div>
+              <div className="h-1.5 overflow-hidden rounded-full bg-[#013144]/8">
+                <div
+                  className="h-full rounded-full bg-[#fcb61f] transition-all duration-500 ease-out"
+                  style={{ width: `${completionPercent}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Full name" htmlFor="public-name">
                 <input
                   id="public-name"
                   value={form.name}
                   onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
                   placeholder="Your full name"
-                  className="h-12 w-full rounded-2xl border border-[#013144]/12 bg-[#013144]/[0.035] px-4 text-sm text-[#013144] outline-none"
+                  className={inputClassName}
                   required
                 />
               </Field>
 
-              <Field label="Phone" htmlFor="public-phone">
+              <Field label="WhatsApp no. optional" htmlFor="public-whatsapp">
                 <input
-                  id="public-phone"
-                  value={form.phone}
-                  onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))}
-                  placeholder="+1 555 000 1111"
-                  className="h-12 w-full rounded-2xl border border-[#013144]/12 bg-[#013144]/[0.035] px-4 text-sm text-[#013144] outline-none"
-                  required
+                  id="public-whatsapp"
+                  value={form.whatsappNumber}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, whatsappNumber: event.target.value }))
+                  }
+                  placeholder="+1 555 000 2222"
+                  className={inputClassName}
                 />
               </Field>
             </div>
@@ -109,7 +144,7 @@ export default function PublicLeadCapturePage() {
                 value={form.email}
                 onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
                 placeholder="you@company.com"
-                className="h-12 w-full rounded-2xl border border-[#013144]/12 bg-[#013144]/[0.035] px-4 text-sm text-[#013144] outline-none"
+                className={inputClassName}
                 required
               />
             </Field>
@@ -122,25 +157,39 @@ export default function PublicLeadCapturePage() {
                   setForm((current) => ({ ...current, projectDetails: event.target.value }))
                 }
                 placeholder="Tell us what you need, your team size, and the workflow you want to improve."
-                rows={6}
-                className="w-full rounded-2xl border border-[#013144]/12 bg-[#013144]/[0.035] px-4 py-3 text-sm text-[#013144] outline-none"
+                rows={5}
+                className={`${inputClassName} min-h-32 resize-y py-3`}
                 required
               />
             </Field>
 
-            <Button type="submit" disabled={submitting} className="w-full">
-              {submitting ? "Submitting..." : "Submit Request"}
-            </Button>
-
-            <p className="text-center text-xs leading-5 text-[#013144]/50 max-w-sm mx-auto">
-              By submitting this form, you agree to our Privacy Policy and consent to be contacted about our services.
-            </p>
+            <button
+              type="submit"
+              disabled={!canSubmit || submitting}
+              className={`group relative flex h-11 w-full items-center justify-between overflow-hidden rounded-lg px-4 text-sm font-semibold transition duration-300 disabled:cursor-not-allowed ${
+                canSubmit
+                  ? "cursor-pointer bg-[#013144] text-white before:absolute before:inset-y-0 before:-left-1/3 before:w-1/3 before:skew-x-[-18deg] before:bg-white/25 before:transition-transform before:duration-700 before:ease-out before:content-[''] hover:bg-[#02455f] hover:before:translate-x-[430%]"
+                  : "bg-[#013144]/8 text-[#013144]/38"
+              }`}
+            >
+              <span>{submitting ? "Submitting..." : canSubmit ? "Submit Request" : "Complete required fields"}</span>
+              <span
+                className={`relative z-10 inline-flex h-7 w-7 items-center justify-center rounded-md transition ${
+                  canSubmit ? "bg-[#fcb61f] text-[#013144] group-hover:translate-x-0.5" : "bg-white/70 text-[#013144]/35"
+                }`}
+              >
+                {submittedLeadId && !submitting ? <Check size={16} /> : <ArrowRight size={16} />}
+              </span>
+            </button>
           </form>
         </section>
       </div>
     </div>
   );
 }
+
+const inputClassName =
+  "h-11 w-full rounded-lg border border-[#013144]/10 bg-[#013144]/[0.025] px-3 text-sm text-[#013144] outline-none transition placeholder:text-[#013144]/35 focus:border-[#fcb61f]/70 focus:bg-white";
 
 function Field({
   label,
@@ -153,7 +202,7 @@ function Field({
 }) {
   return (
     <label htmlFor={htmlFor} className="block space-y-2">
-      <span className="block text-xs font-semibold uppercase tracking-[0.18em] text-[#013144]/55">
+      <span className="block text-[11px] font-semibold uppercase tracking-[0.16em] text-[#013144]/55">
         {label}
       </span>
       {children}
@@ -229,6 +278,10 @@ function readParam(params: URLSearchParams, keys: string[]) {
   }
 
   return "";
+}
+
+function isEmailValid(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
 
 function toStoredUrl(value: string, stripQuery = false) {

@@ -302,7 +302,8 @@ export interface CreateLeadInput {
 
 export interface CreatePublicLeadInput {
   name: string;
-  phone: string;
+  phone?: string | null;
+  whatsappNumber?: string | null;
   email: string;
   projectDetails: string;
   source?: string | null;
