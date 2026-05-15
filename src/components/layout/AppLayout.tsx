@@ -30,7 +30,7 @@ export default function AppLayout({
           {header}
         </div>
 
-        <main className="flex-1 p-3 sm:p-4 lg:mt-[81px] lg:h-[calc(100vh-81px)] lg:flex-none lg:min-h-0 lg:overflow-y-auto lg:p-5">
+        <main className="flex-1 p-3 lg:mt-[81px] lg:h-[calc(100vh-81px)] lg:flex-none lg:min-h-0 lg:overflow-y-auto lg:p-4">
           {children}
         </main>
       </div>

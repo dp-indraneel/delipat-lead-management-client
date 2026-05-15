@@ -13,6 +13,8 @@ import type {
   LeadAssignment,
   LeadAssignmentFilters,
   LeadFilters,
+  LeadImportInput,
+  LeadImportResult,
   LeadIntakeDraft,
   LeadIntakeDraftFilters,
   LeadIntakeDraftImportResult,
@@ -112,13 +114,13 @@ export const leadApi = {
       method: "PATCH",
       body: JSON.stringify(payload),
     }),
-  importJson: (payload: CreateLeadInput[]) =>
-    request<ApiEnvelope<Lead[]>>("/api/v1/leads/import", {
+  importJson: (payload: LeadImportInput[]) =>
+    request<ApiEnvelope<LeadImportResult>>("/api/v1/leads/import", {
       method: "POST",
       body: JSON.stringify(payload),
     }),
-  exportCsv: () => downloadFile("/api/v1/leads/export", "leads.csv", { format: "csv" }),
-  exportJson: () => downloadFile("/api/v1/leads/export", "leads.json", { format: "json" }),
+  exportCsv: (filters: LeadFilters = {}) =>
+    downloadFile("/api/v1/leads/export", "leads.csv", { ...filters, format: "csv" }),
   assign: (id: number, payload: AssignLeadInput) =>
     request<ApiEnvelope<LeadAssignment>>(`/api/v1/leads/${id}/assign`, {
       method: "POST",

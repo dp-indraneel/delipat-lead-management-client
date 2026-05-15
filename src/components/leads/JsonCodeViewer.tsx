@@ -17,7 +17,7 @@ export default function JsonCodeViewer({
   return (
     <div className="space-y-2">
       {label ? <p className="text-xs uppercase tracking-wide text-[#013144]/45">{label}</p> : null}
-      <div className="overflow-hidden rounded-2xl border border-black/20 bg-[#111111] shadow-sm">
+      <div className="overflow-hidden rounded-lg border border-black/20 bg-[#111111] shadow-sm">
         <div className="flex h-10 items-center gap-3 border-b border-white/10 bg-white/[0.04] px-4">
           <div className="flex gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-red-400" />

@@ -45,14 +45,15 @@ export default function PublicLeadCapturePage() {
     setError("");
 
     try {
-      const payload: CreatePublicLeadInput = {
+      const whatsappNumber = form.whatsappNumber.trim();
+      const payload = compactPublicLeadPayload({
         name: form.name.trim(),
         email: form.email.trim(),
         projectDetails: form.projectDetails.trim(),
-        phone: form.whatsappNumber.trim(),
-        whatsappNumber: form.whatsappNumber.trim() || undefined,
+        phone: whatsappNumber,
+        whatsappNumber,
         ...trackingPayload,
-      };
+      });
       const response = await leadApi.createPublic(payload);
       setSubmittedLeadId(response.data.id);
       setForm({
@@ -298,4 +299,28 @@ function toStoredUrl(value: string, stripQuery = false) {
   } catch {
     return value.trim().slice(0, MAX_TRACKING_URL_LENGTH);
   }
+}
+
+function compactPublicLeadPayload(payload: CreatePublicLeadInput): CreatePublicLeadInput {
+  return Object.entries(payload).reduce<CreatePublicLeadInput>(
+    (compactPayload, [key, value]) => {
+      if (value === null || value === undefined) {
+        return compactPayload;
+      }
+
+      if (typeof value === "string" && value.trim() === "") {
+        return compactPayload;
+      }
+
+      return {
+        ...compactPayload,
+        [key]: value,
+      };
+    },
+    {
+      name: payload.name,
+      email: payload.email,
+      projectDetails: payload.projectDetails,
+    }
+  );
 }

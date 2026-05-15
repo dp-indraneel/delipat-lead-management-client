@@ -16,8 +16,8 @@ interface Props {
 const styles = {
   control: (base: Record<string, unknown>, state: { isFocused: boolean }) => ({
     ...base,
-    minHeight: 44,
-    borderRadius: 12,
+    minHeight: 40,
+    borderRadius: 8,
     borderColor: state.isFocused ? "#fcb61f" : "rgba(1, 49, 68, 0.12)",
     boxShadow: "none",
     backgroundColor: "rgba(1, 49, 68, 0.04)",
@@ -44,7 +44,7 @@ const styles = {
   }),
   menu: (base: Record<string, unknown>) => ({
     ...base,
-    borderRadius: 14,
+    borderRadius: 10,
     overflow: "hidden",
   }),
 };

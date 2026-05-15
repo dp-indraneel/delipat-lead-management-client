@@ -7,6 +7,7 @@ interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, "onChange"> 
   readOnly?: boolean;
   hideLabel?: boolean;
   errors?: string[];
+  wrapperClassName?: string;
 }
 
 export default function LeadInputField({
@@ -17,6 +18,7 @@ export default function LeadInputField({
   readOnly = false,
   hideLabel = false,
   errors = [],
+  wrapperClassName = "",
   className = "",
   ...props
 }: Props) {
@@ -24,7 +26,7 @@ export default function LeadInputField({
   const hasError = errors.length > 0;
 
   return (
-    <label htmlFor={inputId} className="space-y-2">
+    <label htmlFor={inputId} className={`block min-w-0 space-y-2 ${wrapperClassName}`}>
       <span
         className={`block text-xs font-medium uppercase tracking-wide text-[#013144]/60 ${
           hideLabel ? "sr-only" : ""
@@ -38,7 +40,7 @@ export default function LeadInputField({
         onChange={onChange}
         readOnly={readOnly}
         aria-invalid={hasError || undefined}
-        className={`h-11 w-full rounded-xl border px-3 text-sm text-[#013144] outline-none ${
+        className={`h-10 w-full rounded-lg border px-3 text-sm text-[#013144] outline-none ${
           hasError ? "border-red-300" : "border-[#013144]/12"
         } ${
           readOnly ? "bg-[#013144]/[0.03]" : "bg-[#013144]/[0.04]"

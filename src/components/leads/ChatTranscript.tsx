@@ -21,7 +21,7 @@ export default function ChatTranscript({
 
   if (!messages.length) {
     return (
-      <div className="rounded-2xl border border-dashed border-[#013144]/15 bg-[#013144]/[0.03] px-4 py-5 text-sm text-[#013144]/55">
+      <div className="rounded-lg border border-dashed border-[#013144]/15 bg-[#013144]/[0.03] px-4 py-4 text-sm text-[#013144]/55">
         No conversation messages found.
       </div>
     );
@@ -29,7 +29,7 @@ export default function ChatTranscript({
 
   return (
     <div
-      className={`space-y-3 rounded-2xl bg-[#f7fafb] p-3 sm:p-4 ${
+      className={`space-y-3 rounded-lg bg-[#f7fafb] p-3 ${
         constrainHeight ? "max-h-96 overflow-auto" : "overflow-visible"
       }`}
     >
@@ -47,10 +47,10 @@ export default function ChatTranscript({
                 {message.label}
               </div>
               <div
-                className={`whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm ${
+                className={`whitespace-pre-wrap break-words rounded-lg px-3 py-2.5 text-sm leading-relaxed shadow-sm ${
                   isUser
-                    ? "rounded-bl-md border border-[#013144]/10 bg-white text-[#013144]"
-                    : "rounded-br-md bg-[#013144] text-white"
+                    ? "rounded-bl-sm border border-[#013144]/10 bg-white text-[#013144]"
+                    : "rounded-br-sm bg-[#013144] text-white"
                 }`}
               >
                 {message.text}

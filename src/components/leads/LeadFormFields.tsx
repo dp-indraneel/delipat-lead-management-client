@@ -7,9 +7,7 @@ import {
   createOptions,
   formatEnumLabel,
   LEAD_CHATBOT_SOURCE,
-  LEAD_PROJECT_TYPES,
   LEAD_RECORD_STATUSES,
-  LEAD_SERVICE_TYPES,
   LEAD_SOURCES,
   PREFERRED_CONTACT_METHODS,
 } from "../../lib/leadOptions";
@@ -24,8 +22,6 @@ interface Props {
 }
 
 const sourceOptions = createOptions(LEAD_SOURCES);
-const serviceTypeOptions = createOptions(LEAD_SERVICE_TYPES);
-const projectTypeOptions = createOptions(LEAD_PROJECT_TYPES);
 const recordStatusOptions = createOptions(LEAD_RECORD_STATUSES);
 const aiProviderOptions = createOptions(AI_PROVIDERS);
 const preferredContactOptions = createOptions(PREFERRED_CONTACT_METHODS);
@@ -47,8 +43,10 @@ export default function LeadFormFields({
 
   const calculatedScore = calculateLeadScore({
     ...form,
-    serviceTypeText: form.serviceType === "OTHER" ? form.serviceTypeOther : null,
-    projectTypeText: form.projectType === "OTHER" ? form.projectTypeOther : null,
+    serviceType: null,
+    serviceTypeText: null,
+    projectType: null,
+    projectTypeText: null,
   });
   const calculatedHotness = calculateLeadStatusFromScore(calculatedScore);
   const isChatbotLead = form.source === LEAD_CHATBOT_SOURCE;
@@ -156,60 +154,6 @@ export default function LeadFormFields({
             onChange={(value) => setField("status", value)}
           />
         </SelectField>
-        <SelectField label="Service type">
-          <SearchableSelect
-            options={serviceTypeOptions}
-            value={form.serviceType || ""}
-            placeholder="Select a service type"
-            isClearable={false}
-            onChange={(value) => setField("serviceType", value)}
-          />
-        </SelectField>
-        <SelectField label="Project type">
-          <SearchableSelect
-            options={projectTypeOptions}
-            value={form.projectType || ""}
-            placeholder="Select a project type"
-            isClearable={false}
-            onChange={(value) => setField("projectType", value)}
-          />
-        </SelectField>
-        {form.serviceType === "OTHER" ? (
-          <TextField
-            id="service-type-other"
-            label="Other service type"
-            value={form.serviceTypeOther || ""}
-            onChange={(event) => setField("serviceTypeOther", event.target.value)}
-            placeholder="Enter service type"
-            errors={fieldErrors.serviceTypeOther}
-          />
-        ) : null}
-        <TextField
-          id="service-type-text"
-          label="Service type text"
-          value={form.serviceTypeText || ""}
-          onChange={(event) => setField("serviceTypeText", event.target.value)}
-          placeholder="Service type text"
-          errors={fieldErrors.serviceTypeText}
-        />
-        {form.projectType === "OTHER" ? (
-          <TextField
-            id="project-type-other"
-            label="Other project type"
-            value={form.projectTypeOther || ""}
-            onChange={(event) => setField("projectTypeOther", event.target.value)}
-            placeholder="Enter project type"
-            errors={fieldErrors.projectTypeOther}
-          />
-        ) : null}
-        <TextField
-          id="project-type-text"
-          label="Project type text"
-          value={form.projectTypeText || ""}
-          onChange={(event) => setField("projectTypeText", event.target.value)}
-          placeholder="Project type text"
-          errors={fieldErrors.projectTypeText}
-        />
         <TextField
           id="project-budget"
           label="Project budget"

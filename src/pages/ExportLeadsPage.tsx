@@ -8,16 +8,17 @@ import SearchableSelect from "../components/ui/SearchableSelect";
 import { leadApi } from "../lib/api";
 import {
   createOptions,
+  formatEnumLabel,
+  LEAD_AI_STATUSES,
   LEAD_HOTNESS_STATUSES,
-  LEAD_PROJECT_TYPES,
   LEAD_RECORD_STATUSES,
-  LEAD_SERVICE_TYPES,
+  LEAD_SOURCES,
 } from "../lib/leadOptions";
-import type { Lead } from "../types/api";
+import type { Lead, LeadFilters } from "../types/api";
 
+const aiStatusOptions = createOptions(LEAD_AI_STATUSES);
 const statusOptions = createOptions(LEAD_RECORD_STATUSES);
-const serviceTypeOptions = createOptions(LEAD_SERVICE_TYPES);
-const projectTypeOptions = createOptions(LEAD_PROJECT_TYPES);
+const sourceOptions = createOptions(LEAD_SOURCES);
 const leadHotnessOptions = createOptions(LEAD_HOTNESS_STATUSES);
 
 export default function ExportLeadsPage() {
@@ -25,25 +26,30 @@ export default function ExportLeadsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
-  const [serviceType, setServiceType] = useState("");
-  const [projectType, setProjectType] = useState("");
+  const [aiStatus, setAiStatus] = useState("");
+  const [source, setSource] = useState("");
   const [leadStatus, setLeadStatus] = useState("");
   const [search, setSearch] = useState("");
+
+  const filters: LeadFilters = useMemo(
+    () => ({
+      page: 1,
+      limit: 100,
+      search,
+      status,
+      aiStatus,
+      source,
+      leadStatus,
+    }),
+    [aiStatus, leadStatus, search, source, status]
+  );
 
   useEffect(() => {
     async function load() {
       setLoading(true);
       setError("");
       try {
-        const response = await leadApi.list({
-          page: 1,
-          limit: 100,
-          search,
-          status,
-          serviceType,
-          projectType,
-          leadStatus,
-        });
+        const response = await leadApi.list(filters);
         setLeads(response.data);
       } catch (nextError) {
         setError(nextError instanceof Error ? nextError.message : "Failed to load leads");
@@ -53,70 +59,67 @@ export default function ExportLeadsPage() {
     }
 
     void load();
-  }, [search, status, serviceType, projectType, leadStatus]);
+  }, [filters]);
 
   const sourceSummary = useMemo(
-    () => Array.from(new Set(leads.map((lead) => lead.source))).join(", ") || "No sources",
+    () => Array.from(new Set(leads.map((lead) => lead.source).filter(Boolean))).map(formatEnumLabel).join(", ") || "No sources",
     [leads]
   );
+  const activeFilterCount = [search, status, aiStatus, source, leadStatus].filter(Boolean).length;
 
   return (
     <div className="space-y-5">
       <PageTitle
         title="Export Leads"
-        subtitle="Keep the export screen visible and use the real lead export APIs."
+        subtitle="Preview filtered leads and export CSV from the backend."
       />
 
       {error ? (
-        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </div>
       ) : null}
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
         <div className="space-y-5 xl:col-span-7">
-          <Card title="Export Builder" description="Filter the preview and export from the backend.">
+          <Card title="Export Builder" description="These filters apply to the preview and exported file.">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search by name, email, or company"
-                className="h-11 rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] px-3 text-sm text-[#013144] outline-none"
+                className="h-10 rounded-lg border border-[#013144]/12 bg-[#013144]/[0.04] px-3 text-sm text-[#013144] outline-none"
               />
               <SearchableSelect
                 options={statusOptions}
                 value={status}
-                placeholder="Status"
+                placeholder="Workflow status"
                 onChange={setStatus}
               />
               <SearchableSelect
-                options={serviceTypeOptions}
-                value={serviceType}
-                placeholder="Service type"
-                onChange={setServiceType}
+                options={aiStatusOptions}
+                value={aiStatus}
+                placeholder="AI status"
+                onChange={setAiStatus}
               />
               <SearchableSelect
-                options={projectTypeOptions}
-                value={projectType}
-                placeholder="Project type"
-                onChange={setProjectType}
+                options={sourceOptions}
+                value={source}
+                placeholder="Source"
+                onChange={setSource}
               />
               <SearchableSelect
                 options={leadHotnessOptions}
                 value={leadStatus}
-                placeholder="Lead heat"
+                placeholder="Heat"
                 onChange={setLeadStatus}
               />
             </div>
 
-            <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <Button variant="secondary" onClick={() => void leadApi.exportCsv()}>
+            <div className="mt-5 flex justify-end">
+              <Button variant="secondary" onClick={() => void leadApi.exportCsv(filters)}>
                 <Download size={16} className="mr-2" />
                 Export CSV
-              </Button>
-              <Button onClick={() => void leadApi.exportJson()}>
-                <Download size={16} className="mr-2" />
-                Export JSON
               </Button>
             </div>
           </Card>
@@ -125,19 +128,11 @@ export default function ExportLeadsPage() {
         <div className="space-y-5 xl:col-span-5">
           <Card title="Current Export Summary">
             <div className="space-y-3 text-sm">
-              <div className="flex items-center justify-between text-[#013144]/70">
-                <span>Total preview leads</span>
-                <span className="text-[#013144]">{leads.length}</span>
-              </div>
-              <div className="flex items-center justify-between text-[#013144]/70">
+              <SummaryRow label="Preview leads" value={String(leads.length)} />
+              <SummaryRow label="Filters active" value={String(activeFilterCount)} />
+              <div className="flex items-start justify-between gap-3 text-[#013144]/70">
                 <span>Sources</span>
-                <span className="max-w-[60%] text-right text-[#013144]">{sourceSummary}</span>
-              </div>
-              <div className="flex items-center justify-between text-[#013144]/70">
-                <span>Filters active</span>
-                <span className="text-[#013144]">
-                  {[search, status, serviceType, projectType, leadStatus].filter(Boolean).length}
-                </span>
+                <span className="max-w-[60%] text-right font-medium text-[#013144]">{sourceSummary}</span>
               </div>
             </div>
           </Card>
@@ -148,18 +143,22 @@ export default function ExportLeadsPage() {
             ) : leads.length === 0 ? (
               <EmptyState
                 title="No leads match"
-                description="Adjust the preview filters or export all leads from the backend."
+                description="Adjust filters or export with fewer constraints."
               />
             ) : (
               <div className="space-y-3">
                 {leads.slice(0, 5).map((lead) => (
                   <div
                     key={lead.id}
-                    className="rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] p-3"
+                    className="rounded-lg border border-[#013144]/12 bg-[#013144]/[0.04] p-3"
                   >
-                    <p className="font-medium text-[#013144]">{lead.fullName}</p>
+                    <p className="font-medium text-[#013144]">{lead.fullName || `Lead #${lead.id}`}</p>
                     <p className="mt-1 text-sm text-[#013144]/50">
-                      {lead.companyName || "-"} • {lead.serviceType || "-"} • {lead.status}
+                      {lead.companyName || "-"} - {formatEnumLabel(lead.source)} - {formatEnumLabel(lead.status)}
+                    </p>
+                    <p className="mt-1 text-xs text-[#013144]/45">
+                      {lead.aiStatus ? formatEnumLabel(lead.aiStatus) : "-"} -{" "}
+                      {lead.leadStatus ? formatEnumLabel(lead.leadStatus) : "-"}
                     </p>
                   </div>
                 ))}
@@ -168,6 +167,15 @@ export default function ExportLeadsPage() {
           </Card>
         </div>
       </div>
+    </div>
+  );
+}
+
+function SummaryRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 text-[#013144]/70">
+      <span>{label}</span>
+      <span className="font-medium text-[#013144]">{value}</span>
     </div>
   );
 }

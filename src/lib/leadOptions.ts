@@ -29,34 +29,32 @@ export const LEAD_PROJECT_TYPES = [
 
 export const LEAD_HOTNESS_STATUSES = ["HOT", "WARM", "COLD"] as const;
 
+export const LEAD_AI_STATUSES = [
+  "NOT_ANALYZED",
+  "ANALYSIS_QUEUED",
+  "ANALYZING",
+  "NEEDS_REVIEW",
+  "ANALYZED",
+  "ANALYSIS_FAILED",
+] as const;
+
 export const LEAD_RECORD_STATUSES = [
-  "AI_ANALYSIS_PENDING",
-  "AI_ANALYZING",
-  "AI_REVIEW_REQUIRED",
   "NEW",
   "UNASSIGNED",
   "ASSIGNED",
-  "ATTEMPT_PENDING",
   "CONTACT_ATTEMPTED",
-  "NO_RESPONSE",
   "FOLLOW_UP_SCHEDULED",
-  "RESPONDED",
-  "INTERESTED",
-  "NOT_INTERESTED",
-  "CONSULTATION_SCHEDULED",
-  "CONSULTATION_COMPLETED",
   "QUALIFIED",
   "PROPOSAL_SENT",
-  "NEGOTIATION",
   "WON",
   "LOST",
-  "ON_HOLD",
-  "DUPLICATE",
-  "SPAM",
   "CLOSED",
+  "SPAM",
+  "DUPLICATE",
 ] as const;
 
 export const LEAD_SOURCES = [
+  "PUBLIC_LEAD_FORM",
   "WEBSITE_FORM",
   "GOOGLE_ADS",
   "WHATSAPP",
@@ -78,11 +76,12 @@ export const PREFERRED_CONTACT_METHODS = ["PHONE", "EMAIL", "WHATSAPP", "MEETING
 
 export const LEAD_DEFAULT_SOURCE = "MANUAL_ENTRY" as const;
 export const LEAD_CHATBOT_SOURCE = "AI_CHATBOT" as const;
-export const LEAD_DEFAULT_STATUS = "NEW" as const;
+export const LEAD_DEFAULT_STATUS = "UNASSIGNED" as const;
 
 export type LeadServiceType = (typeof LEAD_SERVICE_TYPES)[number];
 export type LeadProjectType = (typeof LEAD_PROJECT_TYPES)[number];
 export type LeadHotnessStatus = (typeof LEAD_HOTNESS_STATUSES)[number];
+export type LeadAiStatus = (typeof LEAD_AI_STATUSES)[number];
 export type LeadRecordStatus = (typeof LEAD_RECORD_STATUSES)[number];
 export type LeadSource = (typeof LEAD_SOURCES)[number];
 export type AiProvider = (typeof AI_PROVIDERS)[number];

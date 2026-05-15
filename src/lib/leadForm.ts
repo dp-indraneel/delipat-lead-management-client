@@ -3,6 +3,8 @@ import {
   calculateLeadScore,
   calculateLeadStatusFromScore,
   formatEnumLabel,
+  LEAD_DEFAULT_SOURCE,
+  LEAD_DEFAULT_STATUS,
 } from "./leadOptions";
 
 export function createLeadForm(): CreateLeadInput {
@@ -11,8 +13,8 @@ export function createLeadForm(): CreateLeadInput {
     phone: "",
     whatsappNumber: "",
     email: "",
-    source: "",
-    status: "",
+    source: LEAD_DEFAULT_SOURCE,
+    status: LEAD_DEFAULT_STATUS,
     businessType: "",
     companyName: "",
     companyWebsite: "",
@@ -114,22 +116,22 @@ export function formatJsonKeyValue(value: unknown, fallback: unknown) {
 }
 
 export function buildLeadPayload(form: CreateLeadInput): CreateLeadInput {
-  const serviceTypeText =
-    form.serviceType === "OTHER" ? form.serviceTypeOther || null : form.serviceTypeText || null;
-  const projectTypeText =
-    form.projectType === "OTHER" ? form.projectTypeOther || null : form.projectTypeText || null;
   const leadScore = calculateLeadScore({
     ...form,
-    serviceTypeText,
-    projectTypeText,
+    serviceType: null,
+    serviceTypeText: null,
+    projectType: null,
+    projectTypeText: null,
   });
 
   return {
     ...form,
-    serviceTypeOther: form.serviceType === "OTHER" ? form.serviceTypeOther || null : null,
-    serviceTypeText,
-    projectTypeOther: form.projectType === "OTHER" ? form.projectTypeOther || null : null,
-    projectTypeText,
+    serviceType: null,
+    serviceTypeOther: null,
+    serviceTypeText: null,
+    projectType: null,
+    projectTypeOther: null,
+    projectTypeText: null,
     leadScore,
     leadStatus: calculateLeadStatusFromScore(leadScore),
     score: form.score ?? leadScore,

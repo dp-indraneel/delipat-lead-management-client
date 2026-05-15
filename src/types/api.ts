@@ -113,6 +113,14 @@ export interface LeadIntakeDraftImportResult {
   errors: string[];
 }
 
+export interface LeadImportResult {
+  importedCount: number;
+  failedCount: number;
+  errors: string[];
+}
+
+export type LeadImportInput = Partial<CreateLeadInput>;
+
 export interface Lead {
   id: number;
   fullName: string | null;
@@ -123,6 +131,7 @@ export interface Lead {
   aiProvider: string | null;
   aiModel: string | null;
   status: string;
+  aiStatus: string | null;
   businessType: string | null;
   companyName: string | null;
   companyWebsite: string | null;
@@ -169,7 +178,28 @@ export interface Lead {
   updatedAt: string;
   deletedAt: string | null;
   messages?: unknown[];
+  submittedByUserId?: number | null;
+  submittedByUser?: AppUser | null;
   assignedSalesExecutive?: AppUser | null;
+  tracking?: LeadTracking[];
+}
+
+export interface LeadTracking {
+  id: number;
+  leadId: number;
+  sourceLabel: string | null;
+  campaign: string | null;
+  medium: string | null;
+  channel: string | null;
+  pageUrl: string | null;
+  referrerUrl: string | null;
+  gclid: string | null;
+  utmSource: string | null;
+  utmMedium: string | null;
+  utmCampaign: string | null;
+  utmTerm: string | null;
+  utmContent: string | null;
+  createdAt?: string;
 }
 
 export interface LeadAssignment {
@@ -204,11 +234,13 @@ export interface LeadFilters {
   page?: number;
   limit?: number;
   search?: string;
+  source?: string;
   serviceType?: string;
   projectType?: string;
   caseType?: string;
   leadStatus?: string;
   status?: string;
+  aiStatus?: string;
   campaign?: string;
   medium?: string;
   channel?: string;
