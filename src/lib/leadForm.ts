@@ -9,6 +9,7 @@ export function createLeadForm(): CreateLeadInput {
   return {
     fullName: "",
     phone: "",
+    whatsappNumber: "",
     email: "",
     source: "",
     status: "",
@@ -32,12 +33,29 @@ export function createLeadForm(): CreateLeadInput {
     techStack: "",
     isDecisionMaker: true,
     notes: "",
+    sourceLabel: "",
+    campaign: "",
+    medium: "",
+    channel: "",
+    pageUrl: "",
+    referrerUrl: "",
+    gclid: "",
+    utmSource: "",
+    utmMedium: "",
+    utmCampaign: "",
+    utmTerm: "",
+    utmContent: "",
     leadScore: null,
     leadStatus: null,
+    score: null,
+    customFields: null,
+    payload: null,
     aiProvider: null,
     aiModel: "",
     rawConversation: [],
     aiSummary: "",
+    aiNextAction: "",
+    aiMissingFields: [],
   };
 }
 
@@ -96,8 +114,10 @@ export function formatJsonKeyValue(value: unknown, fallback: unknown) {
 }
 
 export function buildLeadPayload(form: CreateLeadInput): CreateLeadInput {
-  const serviceTypeText = form.serviceType === "OTHER" ? form.serviceTypeOther || null : null;
-  const projectTypeText = form.projectType === "OTHER" ? form.projectTypeOther || null : null;
+  const serviceTypeText =
+    form.serviceType === "OTHER" ? form.serviceTypeOther || null : form.serviceTypeText || null;
+  const projectTypeText =
+    form.projectType === "OTHER" ? form.projectTypeOther || null : form.projectTypeText || null;
   const leadScore = calculateLeadScore({
     ...form,
     serviceTypeText,
@@ -112,8 +132,10 @@ export function buildLeadPayload(form: CreateLeadInput): CreateLeadInput {
     projectTypeText,
     leadScore,
     leadStatus: calculateLeadStatusFromScore(leadScore),
-    aiProvider: form.source === "AI_CHATBOT" ? form.aiProvider || null : null,
-    aiModel: form.source === "AI_CHATBOT" ? form.aiModel || null : null,
+    score: form.score ?? leadScore,
+    aiProvider: form.aiProvider || null,
+    aiModel: form.aiModel || null,
     rawConversation: form.rawConversation ?? [],
+    aiMissingFields: form.aiMissingFields ?? [],
   };
 }

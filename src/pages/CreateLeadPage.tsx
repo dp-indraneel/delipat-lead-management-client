@@ -4,6 +4,7 @@ import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import PageTitle from "../components/ui/PageTitle";
 import { leadApi } from "../lib/api";
+import { clearFieldError, getApiFieldErrors, getApiFormMessage } from "../lib/apiErrors";
 import { buildLeadPayload, createLeadForm } from "../lib/leadForm";
 import { navigateTo } from "../lib/navigation";
 import type { CreateLeadInput } from "../types/api";
@@ -12,6 +13,7 @@ export default function CreateLeadPage() {
   const [form, setForm] = useState<CreateLeadInput>(createLeadForm());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
 
   return (
     <div className="space-y-5">
@@ -33,7 +35,12 @@ export default function CreateLeadPage() {
 
       <Card title="Lead Details" description="Fill in the CRM lead fields and submit to `/api/v1/leads`.">
         <div className="space-y-5">
-          <LeadFormFields form={form} onChange={setForm} />
+          <LeadFormFields
+            form={form}
+            onChange={setForm}
+            fieldErrors={fieldErrors}
+            onFieldChange={(field) => setFieldErrors((current) => clearFieldError(current, field))}
+          />
 
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
             <Button variant="secondary" onClick={() => navigateTo("/leads")} disabled={saving}>
@@ -44,11 +51,13 @@ export default function CreateLeadPage() {
               onClick={async () => {
                 setSaving(true);
                 setError("");
+                setFieldErrors({});
                 try {
                   await leadApi.create(buildLeadPayload(form));
                   navigateTo("/leads");
                 } catch (nextError) {
-                  setError(nextError instanceof Error ? nextError.message : "Failed to create lead");
+                  setFieldErrors(getApiFieldErrors(nextError));
+                  setError(getApiFormMessage(nextError, "Failed to create lead"));
                 } finally {
                   setSaving(false);
                 }

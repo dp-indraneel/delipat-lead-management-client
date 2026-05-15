@@ -9,6 +9,15 @@ type RequestOptions = RequestInit & {
 
 type QueryParams = object;
 
+export type ApiFieldErrors = Record<string, string[]>;
+
+interface ApiErrorPayload {
+  errors?: {
+    formErrors?: string[];
+    fieldErrors?: ApiFieldErrors;
+  };
+}
+
 function buildUrl(path: string, params?: QueryParams) {
   const url = new URL(path, API_BASE_URL);
 
@@ -25,10 +34,14 @@ function buildUrl(path: string, params?: QueryParams) {
 
 export class ApiError extends Error {
   status: number;
+  fieldErrors: ApiFieldErrors;
+  formErrors: string[];
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, payload?: ApiErrorPayload) {
     super(message);
     this.status = status;
+    this.fieldErrors = payload?.errors?.fieldErrors || {};
+    this.formErrors = payload?.errors?.formErrors || [];
   }
 }
 
@@ -67,7 +80,7 @@ export async function request<T>(
         ? String(payload.message)
         : `Request failed with status ${response.status}`;
 
-    throw new ApiError(message, response.status);
+    throw new ApiError(message, response.status, isJson ? (payload as ApiErrorPayload) : undefined);
   }
 
   return payload as T;

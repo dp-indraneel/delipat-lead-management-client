@@ -1,3 +1,4 @@
+import LeadInputField from "./LeadInputField";
 import SearchableSelect from "../ui/SearchableSelect";
 import {
   AI_PROVIDERS,
@@ -18,6 +19,8 @@ interface Props {
   form: CreateLeadInput;
   onChange: (value: CreateLeadInput) => void;
   showAiSummaryField?: boolean;
+  fieldErrors?: Record<string, string[]>;
+  onFieldChange?: (field: keyof CreateLeadInput) => void;
 }
 
 const sourceOptions = createOptions(LEAD_SOURCES);
@@ -27,8 +30,15 @@ const recordStatusOptions = createOptions(LEAD_RECORD_STATUSES);
 const aiProviderOptions = createOptions(AI_PROVIDERS);
 const preferredContactOptions = createOptions(PREFERRED_CONTACT_METHODS);
 
-export default function LeadFormFields({ form, onChange, showAiSummaryField = false }: Props) {
+export default function LeadFormFields({
+  form,
+  onChange,
+  showAiSummaryField = false,
+  fieldErrors = {},
+  onFieldChange,
+}: Props) {
   const setField = <K extends keyof CreateLeadInput>(key: K, value: CreateLeadInput[K]) => {
+    onFieldChange?.(key);
     onChange({
       ...form,
       [key]: value,
@@ -43,6 +53,7 @@ export default function LeadFormFields({ form, onChange, showAiSummaryField = fa
   const calculatedHotness = calculateLeadStatusFromScore(calculatedScore);
   const isChatbotLead = form.source === LEAD_CHATBOT_SOURCE;
   const shouldShowAiSummaryField = isChatbotLead || showAiSummaryField;
+  const shouldShowAiFields = isChatbotLead || showAiSummaryField || Boolean(form.aiProvider || form.aiModel);
 
   return (
     <div className="space-y-5">
@@ -60,6 +71,7 @@ export default function LeadFormFields({ form, onChange, showAiSummaryField = fa
           value={form.fullName || ""}
           onChange={(event) => setField("fullName", event.target.value)}
           placeholder="Full name"
+          errors={fieldErrors.fullName}
         />
         <TextField
           id="job-title"
@@ -67,6 +79,7 @@ export default function LeadFormFields({ form, onChange, showAiSummaryField = fa
           value={form.jobTitle || ""}
           onChange={(event) => setField("jobTitle", event.target.value)}
           placeholder="Job title"
+          errors={fieldErrors.jobTitle}
         />
         <TextField
           id="email"
@@ -75,6 +88,7 @@ export default function LeadFormFields({ form, onChange, showAiSummaryField = fa
           onChange={(event) => setField("email", event.target.value)}
           placeholder="Email"
           type="email"
+          errors={fieldErrors.email}
         />
         <TextField
           id="phone"
@@ -82,6 +96,15 @@ export default function LeadFormFields({ form, onChange, showAiSummaryField = fa
           value={form.phone || ""}
           onChange={(event) => setField("phone", event.target.value)}
           placeholder="Phone"
+          errors={fieldErrors.phone}
+        />
+        <TextField
+          id="whatsapp-number"
+          label="WhatsApp number"
+          value={form.whatsappNumber || ""}
+          onChange={(event) => setField("whatsappNumber", event.target.value)}
+          placeholder="WhatsApp number"
+          errors={fieldErrors.whatsappNumber}
         />
         <TextField
           id="company-name"
@@ -89,6 +112,7 @@ export default function LeadFormFields({ form, onChange, showAiSummaryField = fa
           value={form.companyName || ""}
           onChange={(event) => setField("companyName", event.target.value)}
           placeholder="Company name"
+          errors={fieldErrors.companyName}
         />
         <TextField
           id="company-website"
@@ -96,6 +120,7 @@ export default function LeadFormFields({ form, onChange, showAiSummaryField = fa
           value={form.companyWebsite || ""}
           onChange={(event) => setField("companyWebsite", event.target.value)}
           placeholder="Company website"
+          errors={fieldErrors.companyWebsite}
         />
         <TextField
           id="business-type"
@@ -103,6 +128,7 @@ export default function LeadFormFields({ form, onChange, showAiSummaryField = fa
           value={form.businessType || ""}
           onChange={(event) => setField("businessType", event.target.value)}
           placeholder="Business type"
+          errors={fieldErrors.businessType}
         />
         <TextField
           id="location"
@@ -110,6 +136,7 @@ export default function LeadFormFields({ form, onChange, showAiSummaryField = fa
           value={form.location || ""}
           onChange={(event) => setField("location", event.target.value)}
           placeholder="Location"
+          errors={fieldErrors.location}
         />
         <SelectField label="Lead source">
           <SearchableSelect
@@ -154,8 +181,17 @@ export default function LeadFormFields({ form, onChange, showAiSummaryField = fa
             value={form.serviceTypeOther || ""}
             onChange={(event) => setField("serviceTypeOther", event.target.value)}
             placeholder="Enter service type"
+            errors={fieldErrors.serviceTypeOther}
           />
         ) : null}
+        <TextField
+          id="service-type-text"
+          label="Service type text"
+          value={form.serviceTypeText || ""}
+          onChange={(event) => setField("serviceTypeText", event.target.value)}
+          placeholder="Service type text"
+          errors={fieldErrors.serviceTypeText}
+        />
         {form.projectType === "OTHER" ? (
           <TextField
             id="project-type-other"
@@ -163,14 +199,24 @@ export default function LeadFormFields({ form, onChange, showAiSummaryField = fa
             value={form.projectTypeOther || ""}
             onChange={(event) => setField("projectTypeOther", event.target.value)}
             placeholder="Enter project type"
+            errors={fieldErrors.projectTypeOther}
           />
         ) : null}
+        <TextField
+          id="project-type-text"
+          label="Project type text"
+          value={form.projectTypeText || ""}
+          onChange={(event) => setField("projectTypeText", event.target.value)}
+          placeholder="Project type text"
+          errors={fieldErrors.projectTypeText}
+        />
         <TextField
           id="project-budget"
           label="Project budget"
           value={form.projectBudget || ""}
           onChange={(event) => setField("projectBudget", event.target.value)}
           placeholder="Project budget"
+          errors={fieldErrors.projectBudget}
         />
         <TextField
           id="project-timeline"
@@ -178,6 +224,7 @@ export default function LeadFormFields({ form, onChange, showAiSummaryField = fa
           value={form.projectTimeline || ""}
           onChange={(event) => setField("projectTimeline", event.target.value)}
           placeholder="Project timeline"
+          errors={fieldErrors.projectTimeline}
         />
         <SelectField label="Preferred contact method">
           <SearchableSelect
@@ -187,7 +234,7 @@ export default function LeadFormFields({ form, onChange, showAiSummaryField = fa
             onChange={(value) => setField("preferredContactMethod", value)}
           />
         </SelectField>
-        {isChatbotLead ? (
+        {shouldShowAiFields ? (
           <SelectField label="AI provider">
             <SearchableSelect
               options={aiProviderOptions}
@@ -197,13 +244,14 @@ export default function LeadFormFields({ form, onChange, showAiSummaryField = fa
             />
           </SelectField>
         ) : null}
-        {isChatbotLead ? (
+        {shouldShowAiFields ? (
           <TextField
             id="ai-model"
             label="AI model"
             value={form.aiModel || ""}
             onChange={(event) => setField("aiModel", event.target.value)}
             placeholder="AI model"
+            errors={fieldErrors.aiModel}
           />
         ) : null}
       </div>
@@ -214,6 +262,7 @@ export default function LeadFormFields({ form, onChange, showAiSummaryField = fa
         value={form.projectDescription || ""}
         onChange={(event) => setField("projectDescription", event.target.value)}
         placeholder="Project description"
+        errors={fieldErrors.projectDescription}
       />
       <TextAreaField
         id="current-challenges"
@@ -221,6 +270,7 @@ export default function LeadFormFields({ form, onChange, showAiSummaryField = fa
         value={form.currentChallenges || ""}
         onChange={(event) => setField("currentChallenges", event.target.value)}
         placeholder="Current challenges"
+        errors={fieldErrors.currentChallenges}
       />
       <TextAreaField
         id="expected-features"
@@ -228,6 +278,7 @@ export default function LeadFormFields({ form, onChange, showAiSummaryField = fa
         value={form.expectedFeatures || ""}
         onChange={(event) => setField("expectedFeatures", event.target.value)}
         placeholder="Expected features"
+        errors={fieldErrors.expectedFeatures}
       />
       <TextAreaField
         id="tech-stack"
@@ -235,6 +286,7 @@ export default function LeadFormFields({ form, onChange, showAiSummaryField = fa
         value={form.techStack || ""}
         onChange={(event) => setField("techStack", event.target.value)}
         placeholder="Preferred tech stack"
+        errors={fieldErrors.techStack}
       />
       <TextAreaField
         id="notes"
@@ -242,6 +294,7 @@ export default function LeadFormFields({ form, onChange, showAiSummaryField = fa
         value={form.notes || ""}
         onChange={(event) => setField("notes", event.target.value)}
         placeholder="Internal notes"
+        errors={fieldErrors.notes}
       />
       {shouldShowAiSummaryField ? (
         <TextAreaField
@@ -250,6 +303,17 @@ export default function LeadFormFields({ form, onChange, showAiSummaryField = fa
           value={form.aiSummary || ""}
           onChange={(event) => setField("aiSummary", event.target.value)}
           placeholder="AI summary"
+          errors={fieldErrors.aiSummary}
+        />
+      ) : null}
+      {shouldShowAiSummaryField ? (
+        <TextAreaField
+          id="ai-next-action"
+          label="AI next action"
+          value={form.aiNextAction || ""}
+          onChange={(event) => setField("aiNextAction", event.target.value)}
+          placeholder="AI next action"
+          errors={fieldErrors.aiNextAction}
         />
       ) : null}
 
@@ -287,21 +351,20 @@ interface TextFieldProps {
   onChange: React.ChangeEventHandler<HTMLInputElement>;
   placeholder: string;
   type?: string;
+  errors?: string[];
 }
 
-function TextField({ id, label, value, onChange, placeholder, type = "text" }: TextFieldProps) {
+function TextField({ id, label, value, onChange, placeholder, type = "text", errors }: TextFieldProps) {
   return (
-    <label htmlFor={id} className="space-y-2">
-      <span className="block text-xs font-medium uppercase tracking-wide text-[#013144]/60">{label}</span>
-      <input
-        id={id}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        type={type}
-        className="h-11 w-full rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] px-3 text-sm text-[#013144] outline-none"
-      />
-    </label>
+    <LeadInputField
+      id={id}
+      label={label}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      type={type}
+      errors={errors}
+    />
   );
 }
 
@@ -311,9 +374,12 @@ interface TextAreaFieldProps {
   value: string;
   onChange: React.ChangeEventHandler<HTMLTextAreaElement>;
   placeholder: string;
+  errors?: string[];
 }
 
-function TextAreaField({ id, label, value, onChange, placeholder }: TextAreaFieldProps) {
+function TextAreaField({ id, label, value, onChange, placeholder, errors = [] }: TextAreaFieldProps) {
+  const hasError = errors.length > 0;
+
   return (
     <label htmlFor={id} className="block space-y-2">
       <span className="block text-xs font-medium uppercase tracking-wide text-[#013144]/60">{label}</span>
@@ -323,8 +389,20 @@ function TextAreaField({ id, label, value, onChange, placeholder }: TextAreaFiel
         onChange={onChange}
         rows={4}
         placeholder={placeholder}
-        className="w-full rounded-2xl border border-[#013144]/12 bg-[#013144]/[0.04] px-4 py-3 text-sm text-[#013144] outline-none"
+        aria-invalid={hasError || undefined}
+        className={`w-full rounded-2xl border bg-[#013144]/[0.04] px-4 py-3 text-sm text-[#013144] outline-none ${
+          hasError ? "border-red-300" : "border-[#013144]/12"
+        }`}
       />
+      {hasError ? (
+        <div className="space-y-1">
+          {errors.map((error) => (
+            <p key={error} className="text-xs font-medium text-red-600">
+              {error}
+            </p>
+          ))}
+        </div>
+      ) : null}
     </label>
   );
 }

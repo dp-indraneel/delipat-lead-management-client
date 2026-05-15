@@ -73,7 +73,7 @@ export const LEAD_SOURCES = [
   "BULK_IMPORT",
 ] as const;
 
-export const AI_PROVIDERS = ["OPENAI", "CLAUDE"] as const;
+export const AI_PROVIDERS = ["OPENAI", "CLAUDE", "GEMINI"] as const;
 export const PREFERRED_CONTACT_METHODS = ["PHONE", "EMAIL", "WHATSAPP", "MEETING"] as const;
 
 export const LEAD_DEFAULT_SOURCE = "MANUAL_ENTRY" as const;

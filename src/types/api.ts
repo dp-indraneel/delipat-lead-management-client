@@ -117,6 +117,7 @@ export interface Lead {
   id: number;
   fullName: string | null;
   phone: string | null;
+  whatsappNumber?: string | null;
   email: string | null;
   source: string;
   aiProvider: string | null;
@@ -158,6 +159,7 @@ export interface Lead {
   assignedSalesExecutiveId: number | null;
   notes: string | null;
   customFields?: Record<string, unknown> | null;
+  payload?: Record<string, unknown> | null;
   rawConversation: Record<string, unknown>[] | null;
   aiSummary: string | null;
   aiNextAction?: string | null;
@@ -207,6 +209,15 @@ export interface LeadFilters {
   caseType?: string;
   leadStatus?: string;
   status?: string;
+  campaign?: string;
+  medium?: string;
+  channel?: string;
+  gclid?: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  utmTerm?: string;
+  utmContent?: string;
 }
 
 export interface LeadAssignmentFilters {
@@ -268,6 +279,7 @@ export interface ConvertLeadIntakeDraftInput {
 export interface CreateLeadInput {
   fullName: string;
   phone: string;
+  whatsappNumber?: string | null;
   email: string;
   source: string;
   status: string;
@@ -293,11 +305,27 @@ export interface CreateLeadInput {
   location?: string | null;
   preferredContactMethod?: string | null;
   notes?: string | null;
+  sourceLabel?: string | null;
+  campaign?: string | null;
+  medium?: string | null;
+  channel?: string | null;
+  pageUrl?: string | null;
+  referrerUrl?: string | null;
+  gclid?: string | null;
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
+  utmTerm?: string | null;
+  utmContent?: string | null;
   leadScore?: number | null;
   leadStatus?: string | null;
+  score?: number | null;
   customFields?: Record<string, unknown> | null;
+  payload?: Record<string, unknown> | null;
   rawConversation?: Record<string, unknown>[] | null;
   aiSummary?: string | null;
+  aiNextAction?: string | null;
+  aiMissingFields?: string[] | null;
 }
 
 export interface CreatePublicLeadInput {

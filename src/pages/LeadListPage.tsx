@@ -1,4 +1,4 @@
-import { Eye, MoreHorizontal, Pencil, Trash2, UserPlus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye, MoreHorizontal, Pencil, Trash2, UserPlus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
@@ -12,28 +12,79 @@ import {
   createOptions,
   formatEnumLabel,
   LEAD_HOTNESS_STATUSES,
-  LEAD_PROJECT_TYPES,
   LEAD_RECORD_STATUSES,
-  LEAD_SERVICE_TYPES,
 } from "../lib/leadOptions";
-import { navigateTo } from "../lib/navigation";
-import type { AppUser, CreateLeadInput, Lead } from "../types/api";
+import { navigateTo, onNavigation } from "../lib/navigation";
+import type { AppUser, CreateLeadInput, Lead, LeadFilters } from "../types/api";
 
 const leadStatusOptions = createOptions(LEAD_HOTNESS_STATUSES);
-const serviceTypeOptions = createOptions(LEAD_SERVICE_TYPES);
-const projectTypeOptions = createOptions(LEAD_PROJECT_TYPES);
 const statusOptions = createOptions(LEAD_RECORD_STATUSES);
+const DEFAULT_LIMIT = 20;
+const limitOptions = [10, 20, 50, 100].map((value) => ({
+  value: String(value),
+  label: `${value} per page`,
+}));
+
+function readLeadFiltersFromUrl(): Required<Pick<LeadFilters, "page" | "limit">> &
+  Omit<LeadFilters, "page" | "limit"> {
+  const params = new URLSearchParams(typeof window === "undefined" ? "" : window.location.search);
+  const page = Number(params.get("page") || "1");
+  const limit = Number(params.get("limit") || String(DEFAULT_LIMIT));
+
+  return {
+    page: Number.isFinite(page) && page > 0 ? page : 1,
+    limit: Number.isFinite(limit) && limit > 0 ? limit : DEFAULT_LIMIT,
+    search: params.get("search") || "",
+    status: params.get("status") || "",
+    leadStatus: params.get("leadStatus") || "",
+  };
+}
+
+function writeLeadFiltersToUrl(filters: LeadFilters) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const params = new URLSearchParams();
+
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      params.set(key, String(value));
+    }
+  });
+
+  const query = params.toString();
+  const nextUrl = query ? `/leads?${query}` : "/leads";
+
+  window.history.replaceState({}, "", nextUrl);
+}
+
+function getPaginationItems(currentPage: number, totalPages: number): Array<number | "ellipsis"> {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  if (currentPage <= 4) {
+    return [1, 2, 3, 4, 5, "ellipsis", totalPages];
+  }
+
+  if (currentPage >= totalPages - 3) {
+    return [1, "ellipsis", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+  }
+
+  return [1, "ellipsis", currentPage - 1, currentPage, currentPage + 1, "ellipsis", totalPages];
+}
 
 export default function LeadListPage() {
+  const initialFilters = useRef(readLeadFiltersFromUrl());
   const [leads, setLeads] = useState<Lead[]>([]);
   const [users, setUsers] = useState<AppUser[]>([]);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(initialFilters.current.page);
+  const [limit, setLimit] = useState(initialFilters.current.limit);
   const [totalPages, setTotalPages] = useState(1);
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("");
-  const [serviceType, setServiceType] = useState("");
-  const [projectType, setProjectType] = useState("");
-  const [leadStatus, setLeadStatus] = useState("");
+  const [search, setSearch] = useState(initialFilters.current.search || "");
+  const [status, setStatus] = useState(initialFilters.current.status || "");
+  const [leadStatus, setLeadStatus] = useState(initialFilters.current.leadStatus || "");
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -72,6 +123,18 @@ export default function LeadListPage() {
       2
     )
   );
+  const activeFilters: LeadFilters = {
+    page,
+    limit,
+    search,
+    status,
+    leadStatus,
+  };
+
+  const setFilter = (setter: (value: string) => void, value: string) => {
+    setPage(1);
+    setter(value);
+  };
 
   async function loadLeads() {
     setLoading(true);
@@ -79,18 +142,12 @@ export default function LeadListPage() {
     try {
       const [leadResponse, usersResponse] = await Promise.all([
         leadApi.list({
-          page,
-          limit: 20,
-          search,
-          status,
-          serviceType,
-          projectType,
-          leadStatus,
+          ...activeFilters,
         }),
         adminApi.listUsers(),
       ]);
       setLeads(leadResponse.data);
-      setTotalPages(leadResponse.meta.totalPages);
+      setTotalPages(Math.max(1, leadResponse.meta.totalPages || 1));
       setUsers(usersResponse.data);
       setSelectedLead((current) => {
         if (!leadResponse.data.length) {
@@ -109,8 +166,27 @@ export default function LeadListPage() {
   }
 
   useEffect(() => {
+    writeLeadFiltersToUrl(activeFilters);
     void loadLeads();
-  }, [page, search, status, serviceType, projectType, leadStatus]);
+  }, [
+    page,
+    limit,
+    search,
+    status,
+    leadStatus,
+  ]);
+
+  useEffect(() => {
+    return onNavigation(() => {
+      const filters = readLeadFiltersFromUrl();
+
+      setPage(filters.page);
+      setLimit(filters.limit);
+      setSearch(filters.search || "");
+      setStatus(filters.status || "");
+      setLeadStatus(filters.leadStatus || "");
+    });
+  }, []);
 
   useEffect(() => {
     function handlePointerDown(event: PointerEvent) {
@@ -185,31 +261,24 @@ export default function LeadListPage() {
       ) : null}
 
       <Card title="Search & Filters">
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
           <input
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) => setFilter(setSearch, event.target.value)}
             placeholder="Search by name, email, or company"
             className="h-11 rounded-xl border border-[#013144]/12 bg-[#013144]/[0.04] px-3 text-sm text-[#013144] outline-none"
           />
-          <SearchableSelect options={statusOptions} value={status} placeholder="Status" onChange={setStatus} />
           <SearchableSelect
-            options={serviceTypeOptions}
-            value={serviceType}
-            placeholder="Service type"
-            onChange={setServiceType}
-          />
-          <SearchableSelect
-            options={projectTypeOptions}
-            value={projectType}
-            placeholder="Project type"
-            onChange={setProjectType}
+            options={statusOptions}
+            value={status}
+            placeholder="Status"
+            onChange={(value) => setFilter(setStatus, value)}
           />
           <SearchableSelect
             options={leadStatusOptions}
             value={leadStatus}
             placeholder="Lead heat"
-            onChange={setLeadStatus}
+            onChange={(value) => setFilter(setLeadStatus, value)}
           />
         </div>
       </Card>
@@ -226,12 +295,11 @@ export default function LeadListPage() {
                 <thead className="bg-[#013144]/[0.04] text-[#013144]/55">
                   <tr>
                     <th className="px-4 py-3">Lead</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Company</th>
-                    <th className="px-4 py-3">Service</th>
+                    <th className="px-4 py-3">Lead Score</th>
                     <th className="px-4 py-3">Lead Heat</th>
                     <th className="px-4 py-3">Source</th>
-                    <th className="sticky right-0 z-10 w-[116px] bg-[#eef4f6] px-4 py-3 text-center">
+                    <th className="px-4 py-3">Status</th>
+                    <th className="sticky right-0 z-10 min-w-[116px] w-[116px] bg-[#eef4f6] px-4 py-3 text-center">
                       Actions
                     </th>
                   </tr>
@@ -240,9 +308,7 @@ export default function LeadListPage() {
                   {leads.map((lead) => (
                     <tr
                       key={lead.id}
-                      className={`cursor-pointer border-t border-[#013144]/12 transition hover:bg-[#013144]/[0.03] ${
-                        selectedLead?.id === lead.id ? "bg-[#fcb61f]/8" : ""
-                      }`}
+                      className={`cursor-pointer border-t border-[#013144]/12 transition hover:bg-[#013144]/[0.03]`}
                       onClick={() => navigateTo(`/leads/${lead.id}`)}
                     >
                       <td className="px-4 py-3">
@@ -257,10 +323,10 @@ export default function LeadListPage() {
                           <p className="text-xs text-[#013144]/50">{lead.email}</p>
                         </button>
                       </td>
-                      <td className="px-4 py-3 text-[#013144]/75">{formatEnumLabel(lead.status)}</td>
-                      <td className="px-4 py-3 text-[#013144]/75">{lead.companyName || "-"}</td>
                       <td className="px-4 py-3 text-[#013144]/75">
-                        {lead.serviceType ? formatEnumLabel(lead.serviceType) : "-"}
+                        {lead.leadScore !== null && lead.leadScore !== undefined
+                          ? lead.leadScore
+                          : lead.score ?? "-"}
                       </td>
                       <td className="px-4 py-3 text-[#013144]/75">
                         {lead.leadStatus ? formatEnumLabel(lead.leadStatus) : "-"}
@@ -268,10 +334,9 @@ export default function LeadListPage() {
                       <td className="px-4 py-3 text-[#013144]/75">
                         {lead.sourceLabel || formatEnumLabel(lead.source)}
                       </td>
+                      <td className="px-4 py-3 text-[#013144]/75">{formatEnumLabel(lead.status)}</td>
                       <td
-                        className={`sticky right-0 w-[116px] px-4 py-3 ${
-                          selectedLead?.id === lead.id ? "bg-[#fdf3cf]" : "bg-white"
-                        }`}
+                        className={`sticky right-0 min-w-[116px] w-[116px] px-4 py-3 bg-white`}
                       >
                         <div className="grid grid-cols-2 gap-2">
                           <Button
@@ -337,19 +402,69 @@ export default function LeadListPage() {
             </div>
           )}
 
-          <div className="mt-4 flex items-center justify-between">
-            <Button variant="secondary" onClick={() => setPage((current) => Math.max(1, current - 1))}>
-              Previous
-            </Button>
-            <p className="text-sm text-[#013144]/60">
-              Page {page} of {totalPages}
-            </p>
-            <Button
-              variant="secondary"
-              onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
-            >
-              Next
-            </Button>
+          <div className="mt-4 flex flex-col gap-3 border-t border-[#013144]/10 pt-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="secondary"
+                className="h-10! w-10! px-0!"
+                disabled={page <= 1}
+                aria-label="Previous page"
+                title="Previous page"
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+              >
+                <ChevronLeft size={18} aria-hidden="true" />
+              </Button>
+
+              {getPaginationItems(page, totalPages).map((item, index) =>
+                item === "ellipsis" ? (
+                  <span
+                    key={`ellipsis-${index}`}
+                    className="flex h-10 min-w-10 items-center justify-center rounded-xl px-2 text-sm font-medium text-[#013144]/45"
+                  >
+                    ...
+                  </span>
+                ) : (
+                  <Button
+                    key={item}
+                    variant={item === page ? "primary" : "secondary"}
+                    className="h-10! min-w-10! px-3!"
+                    aria-current={item === page ? "page" : undefined}
+                    onClick={() => setPage(item)}
+                  >
+                    {item}
+                  </Button>
+                )
+              )}
+
+              <Button
+                variant="secondary"
+                className="h-10! w-10! px-0!"
+                disabled={page >= totalPages}
+                aria-label="Next page"
+                title="Next page"
+                onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+              >
+                <ChevronRight size={18} aria-hidden="true" />
+              </Button>
+            </div>
+
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <p className="text-sm text-[#013144]/60">
+                Page {page} of {totalPages}
+              </p>
+              <div className="min-w-40">
+                <SearchableSelect
+                  options={limitOptions}
+                  value={String(limit)}
+                  placeholder="Rows per page"
+                  isClearable={false}
+                  onChange={(value) => {
+                    setPage(1);
+                    setLimit(Number(value));
+                  }}
+                />
+              </div>
+            </div>
           </div>
         </Card>
       </div>

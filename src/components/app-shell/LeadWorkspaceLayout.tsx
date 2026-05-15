@@ -34,7 +34,7 @@ export default function LeadWorkspaceLayout({
           {header}
         </div>
 
-        <main className="grid grid-cols-1 gap-4 p-3 sm:p-4 lg:mt-[81px] lg:min-h-0 lg:grid-cols-12 lg:gap-5 lg:overflow-y-auto lg:p-5">
+        <main className="grid grid-cols-1 gap-4 p-3 sm:p-4 lg:mt-[81px] lg:h-[calc(100vh-81px)] lg:flex-none lg:min-h-0 lg:grid-cols-12 lg:gap-5 lg:overflow-y-auto lg:p-5">
           <section className="min-w-0 space-y-4 lg:col-span-8 xl:col-span-9">
             {filters}
             {table}
